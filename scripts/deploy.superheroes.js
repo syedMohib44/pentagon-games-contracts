@@ -33,9 +33,9 @@ const hre = require("hardhat");
 
 
 async function main() {
-  NFT_NAME = "BlockChainSuperHeros"
+  NFT_NAME = "BlockchainSuperheros"
   NFT_SYMBOL = "BCSH"
-  Min_GasToTransfer = 260000
+  Min_GasToTransfer = 30000
   LZ_ENDPOINT = "0x55370E0fBB5f5b8dAeD978BA1c075a499eB107B8"
   const [addr1] = await hre.ethers.getSigners();
   const bcshContract = await ethers.getContractFactory("Blockchain_Superheroes");

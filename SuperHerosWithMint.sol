@@ -2951,7 +2951,7 @@ contract BasicAccessControl is Ownable {
 }
 
 
-// File contracts/SuperHerosWithMint.sol
+// File contracts/SuperHeroes/SuperHerosWithMint.sol
 
 // Original license: SPDX_License_Identifier: UNLICENSED
 pragma solidity >=0.8.0;
@@ -2961,8 +2961,8 @@ contract Blockchain_Superheroes is ONFT721, BasicAccessControl {
     event MetadataUpdate(uint256 _tokenId);
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 
-    uint256 constant START_TOKEN = 1116000000001; // replace with chain id of the network
-    uint256 _maxCap = 1116000002500;
+    uint256 constant START_TOKEN = 5555000000001; // replace with chain id of the network
+    uint256 _maxCap = 5555000002500;
 
     // create mapping for mainting eth deposits
     mapping(uint256 => uint256) public tokenDeposits;
@@ -3031,7 +3031,7 @@ contract Blockchain_Superheroes is ONFT721, BasicAccessControl {
             ownerOf(_tokenId) == msg.sender,
             "You are not the owner of this token"
         );
-        tokenDeposits[_tokenId] += msg.value;
+        tokenDeposits[_tokenId] += msg.value;   
         totalTokenDeposit += msg.value;
     }
 
@@ -3049,6 +3049,7 @@ contract Blockchain_Superheroes is ONFT721, BasicAccessControl {
 
     // function to withdraw all token from contract of contract
     function withdrawAll() external onlyOwner {
+        require(address(this).balance > totalTokenDeposit, "No deposite from contract owner");
         payable(msg.sender).transfer(address(this).balance - totalTokenDeposit);
     }
 

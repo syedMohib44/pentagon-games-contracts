@@ -893,7 +893,7 @@ interface IBlockchain_Superheroes {
     function balanceOf(address _owner) external view returns (uint256);
 }
 
-contract Blockchain_Superheroes_Distributor is BasicAccessControl {
+contract Blockchain_Superheroes_Distributor_PEN is BasicAccessControl {
     using SafeERC20 for IERC20;
     event Mint(address _owner, uint256 token);
 

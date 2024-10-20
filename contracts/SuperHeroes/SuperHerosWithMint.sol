@@ -3,13 +3,15 @@ pragma solidity >=0.8.0;
 
 import "@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721.sol";
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
+import {Freezable} from "./Freezable.sol";
 
-contract Blockchain_Superheroes is ONFT721, BasicAccessControl {
+contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
     event MetadataUpdate(uint256 _tokenId);
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 
-    uint256 constant START_TOKEN = 1116000000001; // replace with chain id of the network
-    uint256 _maxCap = 1116000002500;
+    uint256 constant START_TOKEN = 5555000000001; // replace with chain id of the network
+    uint256 _maxCap = 5555000002500;
+    bool public isTransferable = false;
 
     // create mapping for mainting eth deposits
     mapping(uint256 => uint256) public tokenDeposits;
@@ -55,7 +57,6 @@ contract Blockchain_Superheroes is ONFT721, BasicAccessControl {
         return mint(_owner, _tokenId);
     }
 
-
     function mint(
         address _owner,
         uint256 _tokenId
@@ -78,8 +79,37 @@ contract Blockchain_Superheroes is ONFT721, BasicAccessControl {
             ownerOf(_tokenId) == msg.sender,
             "You are not the owner of this token"
         );
-        tokenDeposits[_tokenId] += msg.value;   
+        tokenDeposits[_tokenId] += msg.value;
         totalTokenDeposit += msg.value;
+    }
+
+    function toggleIsTransferable() public onlyOwner {
+        isTransferable = !isTransferable;
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount,
+        uint256 batchSize
+    ) internal virtual override {
+        require(
+            moderators[_msgSender()] || isTransferable,
+            "Cannot transfer to the provided address"
+        );
+        require(!isFrozen(from), "ERC20Freezable: from account is frozen");
+        require(!isFrozen(to), "ERC20Freezable: to account is frozen");
+        super._beforeTokenTransfer(from, to, amount, batchSize);
+    }
+
+    function freeze(address _account) public onlyOwner {
+        freezes[_account] = true;
+        emit Frozen(_account);
+    }
+
+    function unfreeze(address _account) public onlyOwner {
+        freezes[_account] = false;
+        emit Unfrozen(_account);
     }
 
     // function to withdraw eth from token deposits
@@ -96,7 +126,10 @@ contract Blockchain_Superheroes is ONFT721, BasicAccessControl {
 
     // function to withdraw all token from contract of contract
     function withdrawAll() external onlyOwner {
-        require(address(this).balance > totalTokenDeposit, "No deposite from contract owner");
+        require(
+            address(this).balance > totalTokenDeposit,
+            "No deposite from contract owner"
+        );
         payable(msg.sender).transfer(address(this).balance - totalTokenDeposit);
     }
 

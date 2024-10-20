@@ -36,7 +36,8 @@ module.exports = {
   etherscan: {
     apiKey: {
       coretestnet: process.env.CORE_TESTNET_API_KEY,
-      polygonamoy: process.env.AMOY_API_KEY
+      polygonamoy: process.env.AMOY_API_KEY,
+      pentestnet: 'pentestnet'
     },
     customChains: [
       {
@@ -45,6 +46,14 @@ module.exports = {
         urls: {
           apiURL: "https://api.test.btcs.network/api",
           browserURL: "https://scan.test.btcs.network"
+        }
+      },
+      {
+        network: "pentestnet",
+        chainId: 555555,
+        urls: {
+          apiURL: "https://api.explorer-testnet.pentagon.zeeve.online/api",
+          browserURL: "https://explorer-testnet.pentagon.games/"
         }
       },
       {

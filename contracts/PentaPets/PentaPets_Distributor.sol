@@ -7,7 +7,7 @@ import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IPentaPets} from "../interfaces/IPentaPets.sol";
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
 
-contract PentaPets_Distributor is BasicAccessControl {
+contract PentaPets_Distributor is BasicAccessControl, ReentrancyGuard {
     event Mint(address _owner, uint256 token);
 
     address public pentaPets;
@@ -34,19 +34,15 @@ contract PentaPets_Distributor is BasicAccessControl {
         pentaPets = _pentaPets;
     }
 
-    function getBalance(address _owner) public view returns (uint256) {
-        IPentaPets pentaPetsContract = IPentaPets(pentaPets);
-        return pentaPetsContract.balanceOf(_owner);
-    }
 
     function setAllowedAddress(
         address _allowedAddress,
         uint256 _classId
-    ) external onlyModerators {
+    ) external onlyOwner {
         allowedAddresses[_classId] = _allowedAddress;
     }
 
-    function mint(uint256 _classId) public returns (bool) {
+    function mint(uint256 _classId) nonReentrant public returns (bool) {
         IPentaPets pentaPetsContract = IPentaPets(pentaPets);
 
         // As thing will move in linearly we don't have to worry about tokens minted from between.
@@ -88,5 +84,17 @@ contract PentaPets_Distributor is BasicAccessControl {
 
     function withdraw() public onlyOwner {
         payable(owner()).transfer(address(this).balance);
+    }
+
+    function withdrawERC20ByClass(
+        uint256 _classId,
+        uint256 _amount
+    ) public onlyOwner {
+        address payableAddress = allowedAddresses[_classId];
+        IERC20(payableAddress).transfer(msg.sender, _amount);
+    }
+
+    function withdrawERC20(address _token, uint256 _amount) public onlyOwner {
+        IERC20(_token).transfer(msg.sender, _amount);
     }
 }

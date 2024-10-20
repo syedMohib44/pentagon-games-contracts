@@ -3633,7 +3633,7 @@ contract BasicAccessControl is Ownable {
 
 pragma solidity >=0.8.0;
 
-contract Blockchain_Superheroes is ONFT721, BasicAccessControl {
+contract Blockchain_Superheroes_PEN is ONFT721, BasicAccessControl {
     event MetadataUpdate(uint256 _tokenId);
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 

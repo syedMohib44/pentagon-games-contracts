@@ -4,7 +4,7 @@ const fs = require('fs');
 const XLSX = require('xlsx');
 
 
-const filePath = path.resolve(__dirname, '../public/pentapets.csv');
+const filePath = path.resolve(__dirname, '../private/pentapets.csv');
 const results = [];
 
 
@@ -41,32 +41,49 @@ const worksheet = workbook.Sheets[sheetName];
 
 // Convert the sheet to JSON (optional, you can work with the raw data)
 const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
 const run = async () => {
-  for (const result of jsonData) {
+  const nameEth = [
 
-    const nameEth = Object.values(result)[col['Name_eth']];
-    const classId = Object.values(result)[0];
-    const totalSupply = Object.values(result)[16];
+    "Jujumbo"
+  ];//Object.values(result)[col['Name_eth']];
+  const classId = [
+    1244
+  ];//Object.values(result)[0];
+  const totalSupply = [
 
-    if (typeof (nameEth) == "string" && nameEth) {
-      const ticker = `c${nameEth.toUpperCase()}`;
+    1500
+  ];//Object.values(result)[16];
+  for (let i = 0; i < nameEth.length; i++) {
 
-      if (typeof (totalSupply) == 'number' && totalSupply) {
-        const supplyWei = hre.ethers.parseEther(totalSupply.toString());
+    if (typeof (nameEth[i]) == "string" && nameEth[i]) {
+      const ticker = `c${nameEth[i].toUpperCase()}`;
+
+      if (typeof (totalSupply[i]) == 'number' && totalSupply[i]) {
+        console.log(classId[i]);
+      }
+    }
+    if (typeof (nameEth[i]) == "string" && nameEth[i]) {
+      const ticker = `c${nameEth[i].toUpperCase()}`;
+
+      if (typeof (totalSupply[i]) == 'number' && totalSupply[i]) {
+        const supplyWei = hre.ethers.parseEther(totalSupply[i].toString());
         const [addr1] = await hre.ethers.getSigners();
         const cToken = await ethers.getContractFactory("Fragments");
         this.cToken = await cToken.connect(addr1).deploy(ticker, ticker, supplyWei);
         // console.log(result, ' ++ ', ticker, ' === ', supplyWei)
-        const data = `${classId} \t ${ticker} \t\t\t ${this.cToken.target} \n`
+        const data = `${classId[i]} \t ${ticker} \t\t\t ${this.cToken.target} \n`
         await new Promise(r => setTimeout(r, 60000));
 
-        await hre.run("verify:verify", {
-          address: this.cToken.target,
-          constructorArguments: [ticker, ticker, supplyWei],
-          contract: `contracts/PentaPets/Fragments.sol:Fragments`
-        });
-        fs.appendFile('fragmentsmapping.txt', data, 'utf-8', (err) => {
+        try {
+          await hre.run("verify:verify", {
+            address: this.cToken.target,
+            constructorArguments: [ticker, ticker, supplyWei],
+            contract: `contracts/PentaPets/Fragments.sol:Fragments`
+          });
+        } catch (err) {
+
+        }
+        fs.appendFile('private/fragmentsmapping.txt', data, 'utf-8', (err) => {
           if (err) {
             console.error('Error writing to file:', err);
           } else {
@@ -75,7 +92,6 @@ const run = async () => {
         })
       }
     }
-    // console.log(result[key])
   }
 }
 run();
