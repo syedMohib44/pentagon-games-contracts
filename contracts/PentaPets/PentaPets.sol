@@ -44,7 +44,7 @@ contract PentaPets is ReentrancyGuard, ERC721, BasicAccessControl {
         address _owner,
         uint256 _classId,
         uint256 _tokenId
-    ) external onlyModerators nonReentrant returns (bool) {
+    ) external onlyModerators returns (bool) {
         return mint(_owner, _classId, _tokenId);
     }
 
@@ -52,7 +52,7 @@ contract PentaPets is ReentrancyGuard, ERC721, BasicAccessControl {
         address _owner,
         uint256 _classId,
         uint256 _tokenId
-    ) internal onlyModerators nonReentrant returns (bool) {
+    ) internal onlyModerators returns (bool) {
         require(_owner != address(0), "ERC721: mint to the zero address");
         require(_tokenId < classIdsLimit[_classId], "Issues with class ids");
         uint256 tokenId = (_classId * distance) + _tokenId;

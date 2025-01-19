@@ -193,10 +193,10 @@ contract BCSH_Distributor is BasicAccessControl {
         blockchainSuperheroes = _blockchainSuperheroes;
     }
 
-    uint256 public mintingCount = 5555000000000; // start token id
-    uint256 public mintingCap = 5555000002500; //  end token id
+    uint256 public mintingCount = 728_126_428_000_000_000_000;
+    uint256 public mintingCap = 728_126_428_000_000_002_500; //  end token id
 
-    uint256 public tokenPrice = 20 * (10 ** 18); // value in wei equals to 10$ worth of core token
+    uint256 public tokenPrice = 88 * (10 ** 18);
 
     bool public _mintingPaused = false;
 
@@ -211,6 +211,21 @@ contract BCSH_Distributor is BasicAccessControl {
         return blockchainSuperherosContract.balanceOf(_owner);
     }
 
+    function mintTo(address _owner) public onlyModerators returns (bool) {
+        IBlockchain_Superheroes blockchainSuperherosContract = IBlockchain_Superheroes(
+                blockchainSuperheroes
+            );
+
+        mintingCount++;
+
+        require(!_mintingPaused, "Minting paused");
+        require(mintingCount <= mintingCap, "Minting cap reached");
+
+        blockchainSuperherosContract.mintNextToken(_owner, mintingCount);
+        emit Mint(_owner, mintingCount);
+        return true;
+    }
+
     function mint() public payable returns (bool) {
         IBlockchain_Superheroes blockchainSuperherosContract = IBlockchain_Superheroes(
                 blockchainSuperheroes
@@ -221,7 +236,7 @@ contract BCSH_Distributor is BasicAccessControl {
         require(!_mintingPaused, "Minting paused");
         require(msg.value == tokenPrice, "token price not met");
         require(mintingCount <= mintingCap, "Minting cap reached");
-        
+
         blockchainSuperherosContract.mintNextToken(msg.sender, mintingCount);
         emit Mint(msg.sender, mintingCount);
         return true;

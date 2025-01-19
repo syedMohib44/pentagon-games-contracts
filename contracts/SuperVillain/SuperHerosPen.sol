@@ -1,10 +1,8 @@
+// Sources flattened with hardhat v2.22.6 https://hardhat.org
 
+// SPDX-License-Identifier: MIT AND Unlicense
 
-// Sources flattened with hardhat v2.22.9 https://hardhat.org
-
-// SPDX-License-Identifier: MIT AND UNLICENSED AND Unlicense
-
-// File @layerzerolabs/solidity-examples/contracts/interfaces/ILayerZeroUserApplicationConfig.sol@v0.0.13
+// File @layerzerolabs/solidity-examples/contracts/lzApp/interfaces/ILayerZeroUserApplicationConfig.sol@v1.1.0
 
 // Original license: SPDX_License_Identifier: MIT
 
@@ -16,7 +14,12 @@ interface ILayerZeroUserApplicationConfig {
     // @param _chainId - the chainId for the pending config change
     // @param _configType - type of configuration. every messaging library has its own convention.
     // @param _config - configuration in the bytes. can encode arbitrary content.
-    function setConfig(uint16 _version, uint16 _chainId, uint _configType, bytes calldata _config) external;
+    function setConfig(
+        uint16 _version,
+        uint16 _chainId,
+        uint _configType,
+        bytes calldata _config
+    ) external;
 
     // @notice set the send() LayerZero messaging library version to _version
     // @param _version - new messaging library version
@@ -29,11 +32,13 @@ interface ILayerZeroUserApplicationConfig {
     // @notice Only when the UA needs to resume the message flow in blocking mode and clear the stored payload
     // @param _srcChainId - the chainId of the source chain
     // @param _srcAddress - the contract address of the source contract at the source chain
-    function forceResumeReceive(uint16 _srcChainId, bytes calldata _srcAddress) external;
+    function forceResumeReceive(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress
+    ) external;
 }
 
-
-// File @layerzerolabs/solidity-examples/contracts/interfaces/ILayerZeroEndpoint.sol@v0.0.13
+// File @layerzerolabs/solidity-examples/contracts/lzApp/interfaces/ILayerZeroEndpoint.sol@v1.1.0
 
 // Original license: SPDX_License_Identifier: MIT
 
@@ -47,7 +52,14 @@ interface ILayerZeroEndpoint is ILayerZeroUserApplicationConfig {
     // @param _refundAddress - if the source transaction is cheaper than the amount of value passed, refund the additional amount to this address
     // @param _zroPaymentAddress - the address of the ZRO token holder who would pay for the transaction
     // @param _adapterParams - parameters for custom functionality. e.g. receive airdropped native gas from the relayer on destination
-    function send(uint16 _dstChainId, bytes calldata _destination, bytes calldata _payload, address payable _refundAddress, address _zroPaymentAddress, bytes calldata _adapterParams) external payable;
+    function send(
+        uint16 _dstChainId,
+        bytes calldata _destination,
+        bytes calldata _payload,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes calldata _adapterParams
+    ) external payable;
 
     // @notice used by the messaging library to publish verified payload
     // @param _srcChainId - the source chain identifier
@@ -56,16 +68,29 @@ interface ILayerZeroEndpoint is ILayerZeroUserApplicationConfig {
     // @param _nonce - the unbound message ordering nonce
     // @param _gasLimit - the gas limit for external contract execution
     // @param _payload - verified payload to send to the destination contract
-    function receivePayload(uint16 _srcChainId, bytes calldata _srcAddress, address _dstAddress, uint64 _nonce, uint _gasLimit, bytes calldata _payload) external;
+    function receivePayload(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress,
+        address _dstAddress,
+        uint64 _nonce,
+        uint _gasLimit,
+        bytes calldata _payload
+    ) external;
 
     // @notice get the inboundNonce of a lzApp from a source chain which could be EVM or non-EVM chain
     // @param _srcChainId - the source chain identifier
     // @param _srcAddress - the source chain contract address
-    function getInboundNonce(uint16 _srcChainId, bytes calldata _srcAddress) external view returns (uint64);
+    function getInboundNonce(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress
+    ) external view returns (uint64);
 
     // @notice get the outboundNonce from this source chain which, consequently, is always an EVM
     // @param _srcAddress - the source chain contract address
-    function getOutboundNonce(uint16 _dstChainId, address _srcAddress) external view returns (uint64);
+    function getOutboundNonce(
+        uint16 _dstChainId,
+        address _srcAddress
+    ) external view returns (uint64);
 
     // @notice gets a quote in source native gas, for the amount that send() requires to pay for message delivery
     // @param _dstChainId - the destination chain identifier
@@ -73,7 +98,13 @@ interface ILayerZeroEndpoint is ILayerZeroUserApplicationConfig {
     // @param _payload - the custom message to send over LayerZero
     // @param _payInZRO - if false, user app pays the protocol fee in native token
     // @param _adapterParam - parameters for the adapter service, e.g. send some dust native token to dstChain
-    function estimateFees(uint16 _dstChainId, address _userApplication, bytes calldata _payload, bool _payInZRO, bytes calldata _adapterParam) external view returns (uint nativeFee, uint zroFee);
+    function estimateFees(
+        uint16 _dstChainId,
+        address _userApplication,
+        bytes calldata _payload,
+        bool _payInZRO,
+        bytes calldata _adapterParam
+    ) external view returns (uint nativeFee, uint zroFee);
 
     // @notice get this Endpoint's immutable source identifier
     function getChainId() external view returns (uint16);
@@ -82,20 +113,31 @@ interface ILayerZeroEndpoint is ILayerZeroUserApplicationConfig {
     // @param _srcChainId - the source chain identifier
     // @param _srcAddress - the source chain contract address
     // @param _payload - the payload to be retried
-    function retryPayload(uint16 _srcChainId, bytes calldata _srcAddress, bytes calldata _payload) external;
+    function retryPayload(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress,
+        bytes calldata _payload
+    ) external;
 
     // @notice query if any STORED payload (message blocking) at the endpoint.
     // @param _srcChainId - the source chain identifier
     // @param _srcAddress - the source chain contract address
-    function hasStoredPayload(uint16 _srcChainId, bytes calldata _srcAddress) external view returns (bool);
+    function hasStoredPayload(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress
+    ) external view returns (bool);
 
     // @notice query if the _libraryAddress is valid for sending msgs.
     // @param _userApplication - the user app address on this EVM chain
-    function getSendLibraryAddress(address _userApplication) external view returns (address);
+    function getSendLibraryAddress(
+        address _userApplication
+    ) external view returns (address);
 
     // @notice query if the _libraryAddress is valid for receiving msgs.
     // @param _userApplication - the user app address on this EVM chain
-    function getReceiveLibraryAddress(address _userApplication) external view returns (address);
+    function getReceiveLibraryAddress(
+        address _userApplication
+    ) external view returns (address);
 
     // @notice query if the non-reentrancy guard for send() is on
     // @return true if the guard is on. false otherwise
@@ -110,35 +152,27 @@ interface ILayerZeroEndpoint is ILayerZeroUserApplicationConfig {
     // @param _chainId - the chainId for the pending config change
     // @param _userApplication - the contract address of the user application
     // @param _configType - type of configuration. every messaging library has its own convention.
-    function getConfig(uint16 _version, uint16 _chainId, address _userApplication, uint _configType) external view returns (bytes memory);
+    function getConfig(
+        uint16 _version,
+        uint16 _chainId,
+        address _userApplication,
+        uint _configType
+    ) external view returns (bytes memory);
 
     // @notice get the send() LayerZero messaging library version
     // @param _userApplication - the contract address of the user application
-    function getSendVersion(address _userApplication) external view returns (uint16);
+    function getSendVersion(
+        address _userApplication
+    ) external view returns (uint16);
 
     // @notice get the lzReceive() LayerZero messaging library version
     // @param _userApplication - the contract address of the user application
-    function getReceiveVersion(address _userApplication) external view returns (uint16);
+    function getReceiveVersion(
+        address _userApplication
+    ) external view returns (uint16);
 }
 
-
-// File @layerzerolabs/solidity-examples/contracts/interfaces/ILayerZeroReceiver.sol@v0.0.13
-
-// Original license: SPDX_License_Identifier: MIT
-
-pragma solidity >=0.5.0;
-
-interface ILayerZeroReceiver {
-    // @notice LayerZero endpoint will invoke this function to deliver the message on the destination
-    // @param _srcChainId - the source endpoint identifier
-    // @param _srcAddress - the source sending contract address from the source chain
-    // @param _nonce - the ordered message nonce
-    // @param _payload - the signed payload is the UA bytes has encoded to be sent
-    function lzReceive(uint16 _srcChainId, bytes calldata _srcAddress, uint64 _nonce, bytes calldata _payload) external;
-}
-
-
-// File @layerzerolabs/solidity-examples/contracts/util/BytesLib.sol@v0.0.13
+// File @layerzerolabs/solidity-examples/contracts/libraries/BytesLib.sol@v1.1.0
 
 // Original license: SPDX_License_Identifier: Unlicense
 /*
@@ -150,61 +184,56 @@ interface ILayerZeroReceiver {
  */
 pragma solidity >=0.8.0 <0.9.0;
 
-
 library BytesLib {
     function concat(
         bytes memory _preBytes,
         bytes memory _postBytes
-    )
-    internal
-    pure
-    returns (bytes memory)
-    {
+    ) internal pure returns (bytes memory) {
         bytes memory tempBytes;
 
         assembly {
-        // Get a location of some free memory and store it in tempBytes as
-        // Solidity does for memory variables.
+            // Get a location of some free memory and store it in tempBytes as
+            // Solidity does for memory variables.
             tempBytes := mload(0x40)
 
-        // Store the length of the first bytes array at the beginning of
-        // the memory for tempBytes.
+            // Store the length of the first bytes array at the beginning of
+            // the memory for tempBytes.
             let length := mload(_preBytes)
             mstore(tempBytes, length)
 
-        // Maintain a memory counter for the current write location in the
-        // temp bytes array by adding the 32 bytes for the array length to
-        // the starting location.
+            // Maintain a memory counter for the current write location in the
+            // temp bytes array by adding the 32 bytes for the array length to
+            // the starting location.
             let mc := add(tempBytes, 0x20)
-        // Stop copying when the memory counter reaches the length of the
-        // first bytes array.
+            // Stop copying when the memory counter reaches the length of the
+            // first bytes array.
             let end := add(mc, length)
 
             for {
-            // Initialize a copy counter to the start of the _preBytes data,
-            // 32 bytes into its memory.
+                // Initialize a copy counter to the start of the _preBytes data,
+                // 32 bytes into its memory.
                 let cc := add(_preBytes, 0x20)
             } lt(mc, end) {
-            // Increase both counters by 32 bytes each iteration.
+                // Increase both counters by 32 bytes each iteration.
                 mc := add(mc, 0x20)
                 cc := add(cc, 0x20)
             } {
-            // Write the _preBytes data into the tempBytes memory 32 bytes
-            // at a time.
+                // Write the _preBytes data into the tempBytes memory 32 bytes
+                // at a time.
                 mstore(mc, mload(cc))
             }
 
-        // Add the length of _postBytes to the current length of tempBytes
-        // and store it as the new length in the first 32 bytes of the
-        // tempBytes memory.
+            // Add the length of _postBytes to the current length of tempBytes
+            // and store it as the new length in the first 32 bytes of the
+            // tempBytes memory.
             length := mload(_postBytes)
             mstore(tempBytes, add(length, mload(tempBytes)))
 
-        // Move the memory counter back from a multiple of 0x20 to the
-        // actual end of the _preBytes data.
+            // Move the memory counter back from a multiple of 0x20 to the
+            // actual end of the _preBytes data.
             mc := end
-        // Stop copying when the memory counter reaches the new combined
-        // length of the arrays.
+            // Stop copying when the memory counter reaches the new combined
+            // length of the arrays.
             end := add(mc, length)
 
             for {
@@ -216,89 +245,98 @@ library BytesLib {
                 mstore(mc, mload(cc))
             }
 
-        // Update the free-memory pointer by padding our last write location
-        // to 32 bytes: add 31 bytes to the end of tempBytes to move to the
-        // next 32 byte block, then round down to the nearest multiple of
-        // 32. If the sum of the length of the two arrays is zero then add
-        // one before rounding down to leave a blank 32 bytes (the length block with 0).
-            mstore(0x40, and(
-            add(add(end, iszero(add(length, mload(_preBytes)))), 31),
-            not(31) // Round down to the nearest 32 bytes.
-            ))
+            // Update the free-memory pointer by padding our last write location
+            // to 32 bytes: add 31 bytes to the end of tempBytes to move to the
+            // next 32 byte block, then round down to the nearest multiple of
+            // 32. If the sum of the length of the two arrays is zero then add
+            // one before rounding down to leave a blank 32 bytes (the length block with 0).
+            mstore(
+                0x40,
+                and(
+                    add(add(end, iszero(add(length, mload(_preBytes)))), 31),
+                    not(31) // Round down to the nearest 32 bytes.
+                )
+            )
         }
 
         return tempBytes;
     }
 
-    function concatStorage(bytes storage _preBytes, bytes memory _postBytes) internal {
+    function concatStorage(
+        bytes storage _preBytes,
+        bytes memory _postBytes
+    ) internal {
         assembly {
-        // Read the first 32 bytes of _preBytes storage, which is the length
-        // of the array. (We don't need to use the offset into the slot
-        // because arrays use the entire slot.)
+            // Read the first 32 bytes of _preBytes storage, which is the length
+            // of the array. (We don't need to use the offset into the slot
+            // because arrays use the entire slot.)
             let fslot := sload(_preBytes.slot)
-        // Arrays of 31 bytes or less have an even value in their slot,
-        // while longer arrays have an odd value. The actual length is
-        // the slot divided by two for odd values, and the lowest order
-        // byte divided by two for even values.
-        // If the slot is even, bitwise and the slot with 255 and divide by
-        // two to get the length. If the slot is odd, bitwise and the slot
-        // with -1 and divide by two.
-            let slength := div(and(fslot, sub(mul(0x100, iszero(and(fslot, 1))), 1)), 2)
+            // Arrays of 31 bytes or less have an even value in their slot,
+            // while longer arrays have an odd value. The actual length is
+            // the slot divided by two for odd values, and the lowest order
+            // byte divided by two for even values.
+            // If the slot is even, bitwise and the slot with 255 and divide by
+            // two to get the length. If the slot is odd, bitwise and the slot
+            // with -1 and divide by two.
+            let slength := div(
+                and(fslot, sub(mul(0x100, iszero(and(fslot, 1))), 1)),
+                2
+            )
             let mlength := mload(_postBytes)
             let newlength := add(slength, mlength)
-        // slength can contain both the length and contents of the array
-        // if length < 32 bytes so let's prepare for that
-        // v. http://solidity.readthedocs.io/en/latest/miscellaneous.html#layout-of-state-variables-in-storage
+            // slength can contain both the length and contents of the array
+            // if length < 32 bytes so let's prepare for that
+            // v. http://solidity.readthedocs.io/en/latest/miscellaneous.html#layout-of-state-variables-in-storage
             switch add(lt(slength, 32), lt(newlength, 32))
             case 2 {
-            // Since the new array still fits in the slot, we just need to
-            // update the contents of the slot.
-            // uint256(bytes_storage) = uint256(bytes_storage) + uint256(bytes_memory) + new_length
+                // Since the new array still fits in the slot, we just need to
+                // update the contents of the slot.
+                // uint256(bytes_storage) = uint256(bytes_storage) + uint256(bytes_memory) + new_length
                 sstore(
-                _preBytes.slot,
-                // all the modifications to the slot are inside this
-                // next block
-                add(
-                // we can just add to the slot contents because the
-                // bytes we want to change are the LSBs
-                fslot,
-                add(
-                mul(
-                div(
-                // load the bytes from memory
-                mload(add(_postBytes, 0x20)),
-                // zero all bytes to the right
-                exp(0x100, sub(32, mlength))
-                ),
-                // and now shift left the number of bytes to
-                // leave space for the length in the slot
-                exp(0x100, sub(32, newlength))
-                ),
-                // increase length by the double of the memory
-                // bytes length
-                mul(mlength, 2)
-                )
-                )
+                    _preBytes.slot,
+                    // all the modifications to the slot are inside this
+                    // next block
+                    add(
+                        // we can just add to the slot contents because the
+                        // bytes we want to change are the LSBs
+                        fslot,
+                        add(
+                            mul(
+                                div(
+                                    // load the bytes from memory
+                                    mload(add(_postBytes, 0x20)),
+                                    // zero all bytes to the right
+                                    exp(0x100, sub(32, mlength))
+                                ),
+                                // and now shift left the number of bytes to
+                                // leave space for the length in the slot
+                                exp(0x100, sub(32, newlength))
+                            ),
+                            // increase length by the double of the memory
+                            // bytes length
+                            mul(mlength, 2)
+                        )
+                    )
                 )
             }
             case 1 {
-            // The stored value fits in the slot, but the combined value
-            // will exceed it.
-            // get the keccak hash to get the contents of the array
+                // The stored value fits in the slot, but the combined value
+                // will exceed it.
+                // get the keccak hash to get the contents of the array
                 mstore(0x0, _preBytes.slot)
                 let sc := add(keccak256(0x0, 0x20), div(slength, 32))
 
-            // save new length
+                // save new length
                 sstore(_preBytes.slot, add(mul(newlength, 2), 1))
 
-            // The contents of the _postBytes array start 32 bytes into
-            // the structure. Our first read should obtain the `submod`
-            // bytes that can fit into the unused space in the last word
-            // of the stored array. To get this, we read 32 bytes starting
-            // from `submod`, so the data we read overlaps with the array
-            // contents by `submod` bytes. Masking the lowest-order
-            // `submod` bytes allows us to add that value directly to the
-            // stored value.
+                // The contents of the _postBytes array start 32 bytes into
+                // the structure. Our first read should obtain the `submod`
+                // bytes that can fit into the unused space in the last word
+                // of the stored array. To get this, we read 32 bytes starting
+                // from `submod`, so the data we read overlaps with the array
+                // contents by `submod` bytes. Masking the lowest-order
+                // `submod` bytes allows us to add that value directly to the
+                // stored value.
 
                 let submod := sub(32, slength)
                 let mc := add(_postBytes, submod)
@@ -306,14 +344,14 @@ library BytesLib {
                 let mask := sub(exp(0x100, submod), 1)
 
                 sstore(
-                sc,
-                add(
-                and(
-                fslot,
-                0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00
-                ),
-                and(mload(mc), mask)
-                )
+                    sc,
+                    add(
+                        and(
+                            fslot,
+                            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00
+                        ),
+                        and(mload(mc), mask)
+                    )
                 )
 
                 for {
@@ -331,16 +369,16 @@ library BytesLib {
                 sstore(sc, mul(div(mload(mc), mask), mask))
             }
             default {
-            // get the keccak hash to get the contents of the array
+                // get the keccak hash to get the contents of the array
                 mstore(0x0, _preBytes.slot)
-            // Start copying to the last used word of the stored array.
+                // Start copying to the last used word of the stored array.
                 let sc := add(keccak256(0x0, 0x20), div(slength, 32))
 
-            // save new length
+                // save new length
                 sstore(_preBytes.slot, add(mul(newlength, 2), 1))
 
-            // Copy over the first `submod` bytes of the new data as in
-            // case 1 above.
+                // Copy over the first `submod` bytes of the new data as in
+                // case 1 above.
                 let slengthmod := mod(slength, 32)
                 let mlengthmod := mod(mlength, 32)
                 let submod := sub(32, slengthmod)
@@ -369,13 +407,9 @@ library BytesLib {
 
     function slice(
         bytes memory _bytes,
-        uint256 _start,
-        uint256 _length
-    )
-    internal
-    pure
-    returns (bytes memory)
-    {
+        uint _start,
+        uint _length
+    ) internal pure returns (bytes memory) {
         require(_length + 31 >= _length, "slice_overflow");
         require(_bytes.length >= _start + _length, "slice_outOfBounds");
 
@@ -384,31 +418,40 @@ library BytesLib {
         assembly {
             switch iszero(_length)
             case 0 {
-            // Get a location of some free memory and store it in tempBytes as
-            // Solidity does for memory variables.
+                // Get a location of some free memory and store it in tempBytes as
+                // Solidity does for memory variables.
                 tempBytes := mload(0x40)
 
-            // The first word of the slice result is potentially a partial
-            // word read from the original array. To read it, we calculate
-            // the length of that partial word and start copying that many
-            // bytes into the array. The first word we copy will start with
-            // data we don't care about, but the last `lengthmod` bytes will
-            // land at the beginning of the contents of the new array. When
-            // we're done copying, we overwrite the full first word with
-            // the actual length of the slice.
+                // The first word of the slice result is potentially a partial
+                // word read from the original array. To read it, we calculate
+                // the length of that partial word and start copying that many
+                // bytes into the array. The first word we copy will start with
+                // data we don't care about, but the last `lengthmod` bytes will
+                // land at the beginning of the contents of the new array. When
+                // we're done copying, we overwrite the full first word with
+                // the actual length of the slice.
                 let lengthmod := and(_length, 31)
 
-            // The multiplication in the next line is necessary
-            // because when slicing multiples of 32 bytes (lengthmod == 0)
-            // the following copy loop was copying the origin's length
-            // and then ending prematurely not copying everything it should.
-                let mc := add(add(tempBytes, lengthmod), mul(0x20, iszero(lengthmod)))
+                // The multiplication in the next line is necessary
+                // because when slicing multiples of 32 bytes (lengthmod == 0)
+                // the following copy loop was copying the origin's length
+                // and then ending prematurely not copying everything it should.
+                let mc := add(
+                    add(tempBytes, lengthmod),
+                    mul(0x20, iszero(lengthmod))
+                )
                 let end := add(mc, _length)
 
                 for {
-                // The multiplication in the next line has the same exact purpose
-                // as the one above.
-                    let cc := add(add(add(_bytes, lengthmod), mul(0x20, iszero(lengthmod))), _start)
+                    // The multiplication in the next line has the same exact purpose
+                    // as the one above.
+                    let cc := add(
+                        add(
+                            add(_bytes, lengthmod),
+                            mul(0x20, iszero(lengthmod))
+                        ),
+                        _start
+                    )
                 } lt(mc, end) {
                     mc := add(mc, 0x20)
                     cc := add(cc, 0x20)
@@ -418,15 +461,15 @@ library BytesLib {
 
                 mstore(tempBytes, _length)
 
-            //update free-memory pointer
-            //allocating the array padded to 32 bytes like the compiler does now
+                //update free-memory pointer
+                //allocating the array padded to 32 bytes like the compiler does now
                 mstore(0x40, and(add(mc, 31), not(31)))
             }
             //if we want a zero-length slice let's just return a zero-length array
             default {
                 tempBytes := mload(0x40)
-            //zero out the 32 bytes slice we are about to return
-            //we need to do it because Solidity does not garbage collect
+                //zero out the 32 bytes slice we are about to return
+                //we need to do it because Solidity does not garbage collect
                 mstore(tempBytes, 0)
 
                 mstore(0x40, add(tempBytes, 0x20))
@@ -436,19 +479,28 @@ library BytesLib {
         return tempBytes;
     }
 
-    function toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address) {
+    function toAddress(
+        bytes memory _bytes,
+        uint _start
+    ) internal pure returns (address) {
         require(_bytes.length >= _start + 20, "toAddress_outOfBounds");
         address tempAddress;
 
         assembly {
-            tempAddress := div(mload(add(add(_bytes, 0x20), _start)), 0x1000000000000000000000000)
+            tempAddress := div(
+                mload(add(add(_bytes, 0x20), _start)),
+                0x1000000000000000000000000
+            )
         }
 
         return tempAddress;
     }
 
-    function toUint8(bytes memory _bytes, uint256 _start) internal pure returns (uint8) {
-        require(_bytes.length >= _start + 1 , "toUint8_outOfBounds");
+    function toUint8(
+        bytes memory _bytes,
+        uint _start
+    ) internal pure returns (uint8) {
+        require(_bytes.length >= _start + 1, "toUint8_outOfBounds");
         uint8 tempUint;
 
         assembly {
@@ -458,7 +510,10 @@ library BytesLib {
         return tempUint;
     }
 
-    function toUint16(bytes memory _bytes, uint256 _start) internal pure returns (uint16) {
+    function toUint16(
+        bytes memory _bytes,
+        uint _start
+    ) internal pure returns (uint16) {
         require(_bytes.length >= _start + 2, "toUint16_outOfBounds");
         uint16 tempUint;
 
@@ -469,7 +524,10 @@ library BytesLib {
         return tempUint;
     }
 
-    function toUint32(bytes memory _bytes, uint256 _start) internal pure returns (uint32) {
+    function toUint32(
+        bytes memory _bytes,
+        uint _start
+    ) internal pure returns (uint32) {
         require(_bytes.length >= _start + 4, "toUint32_outOfBounds");
         uint32 tempUint;
 
@@ -480,7 +538,10 @@ library BytesLib {
         return tempUint;
     }
 
-    function toUint64(bytes memory _bytes, uint256 _start) internal pure returns (uint64) {
+    function toUint64(
+        bytes memory _bytes,
+        uint _start
+    ) internal pure returns (uint64) {
         require(_bytes.length >= _start + 8, "toUint64_outOfBounds");
         uint64 tempUint;
 
@@ -491,7 +552,10 @@ library BytesLib {
         return tempUint;
     }
 
-    function toUint96(bytes memory _bytes, uint256 _start) internal pure returns (uint96) {
+    function toUint96(
+        bytes memory _bytes,
+        uint _start
+    ) internal pure returns (uint96) {
         require(_bytes.length >= _start + 12, "toUint96_outOfBounds");
         uint96 tempUint;
 
@@ -502,7 +566,10 @@ library BytesLib {
         return tempUint;
     }
 
-    function toUint128(bytes memory _bytes, uint256 _start) internal pure returns (uint128) {
+    function toUint128(
+        bytes memory _bytes,
+        uint _start
+    ) internal pure returns (uint128) {
         require(_bytes.length >= _start + 16, "toUint128_outOfBounds");
         uint128 tempUint;
 
@@ -513,9 +580,12 @@ library BytesLib {
         return tempUint;
     }
 
-    function toUint256(bytes memory _bytes, uint256 _start) internal pure returns (uint256) {
+    function toUint256(
+        bytes memory _bytes,
+        uint _start
+    ) internal pure returns (uint) {
         require(_bytes.length >= _start + 32, "toUint256_outOfBounds");
-        uint256 tempUint;
+        uint tempUint;
 
         assembly {
             tempUint := mload(add(add(_bytes, 0x20), _start))
@@ -524,7 +594,10 @@ library BytesLib {
         return tempUint;
     }
 
-    function toBytes32(bytes memory _bytes, uint256 _start) internal pure returns (bytes32) {
+    function toBytes32(
+        bytes memory _bytes,
+        uint _start
+    ) internal pure returns (bytes32) {
         require(_bytes.length >= _start + 32, "toBytes32_outOfBounds");
         bytes32 tempBytes32;
 
@@ -535,19 +608,22 @@ library BytesLib {
         return tempBytes32;
     }
 
-    function equal(bytes memory _preBytes, bytes memory _postBytes) internal pure returns (bool) {
+    function equal(
+        bytes memory _preBytes,
+        bytes memory _postBytes
+    ) internal pure returns (bool) {
         bool success = true;
 
         assembly {
             let length := mload(_preBytes)
 
-        // if lengths don't match the arrays are not equal
+            // if lengths don't match the arrays are not equal
             switch eq(length, mload(_postBytes))
             case 1 {
-            // cb is a circuit breaker in the for loop since there's
-            //  no said feature for inline assembly loops
-            // cb = 1 - don't breaker
-            // cb = 0 - break
+                // cb is a circuit breaker in the for loop since there's
+                //  no said feature for inline assembly loops
+                // cb = 1 - don't breaker
+                // cb = 0 - break
                 let cb := 1
 
                 let mc := add(_preBytes, 0x20)
@@ -555,22 +631,22 @@ library BytesLib {
 
                 for {
                     let cc := add(_postBytes, 0x20)
-                // the next line is the loop condition:
-                // while(uint256(mc < end) + cb == 2)
+                    // the next line is the loop condition:
+                    // while(uint256(mc < end) + cb == 2)
                 } eq(add(lt(mc, end), cb), 2) {
                     mc := add(mc, 0x20)
                     cc := add(cc, 0x20)
                 } {
-                // if any of these checks fails then arrays are not equal
+                    // if any of these checks fails then arrays are not equal
                     if iszero(eq(mload(mc), mload(cc))) {
-                    // unsuccess:
+                        // unsuccess:
                         success := 0
                         cb := 0
                     }
                 }
             }
             default {
-            // unsuccess:
+                // unsuccess:
                 success := 0
             }
         }
@@ -581,59 +657,60 @@ library BytesLib {
     function equalStorage(
         bytes storage _preBytes,
         bytes memory _postBytes
-    )
-    internal
-    view
-    returns (bool)
-    {
+    ) internal view returns (bool) {
         bool success = true;
 
         assembly {
-        // we know _preBytes_offset is 0
+            // we know _preBytes_offset is 0
             let fslot := sload(_preBytes.slot)
-        // Decode the length of the stored array like in concatStorage().
-            let slength := div(and(fslot, sub(mul(0x100, iszero(and(fslot, 1))), 1)), 2)
+            // Decode the length of the stored array like in concatStorage().
+            let slength := div(
+                and(fslot, sub(mul(0x100, iszero(and(fslot, 1))), 1)),
+                2
+            )
             let mlength := mload(_postBytes)
 
-        // if lengths don't match the arrays are not equal
+            // if lengths don't match the arrays are not equal
             switch eq(slength, mlength)
             case 1 {
-            // slength can contain both the length and contents of the array
-            // if length < 32 bytes so let's prepare for that
-            // v. http://solidity.readthedocs.io/en/latest/miscellaneous.html#layout-of-state-variables-in-storage
+                // slength can contain both the length and contents of the array
+                // if length < 32 bytes so let's prepare for that
+                // v. http://solidity.readthedocs.io/en/latest/miscellaneous.html#layout-of-state-variables-in-storage
                 if iszero(iszero(slength)) {
                     switch lt(slength, 32)
                     case 1 {
-                    // blank the last byte which is the length
+                        // blank the last byte which is the length
                         fslot := mul(div(fslot, 0x100), 0x100)
 
                         if iszero(eq(fslot, mload(add(_postBytes, 0x20)))) {
-                        // unsuccess:
+                            // unsuccess:
                             success := 0
                         }
                     }
                     default {
-                    // cb is a circuit breaker in the for loop since there's
-                    //  no said feature for inline assembly loops
-                    // cb = 1 - don't breaker
-                    // cb = 0 - break
+                        // cb is a circuit breaker in the for loop since there's
+                        //  no said feature for inline assembly loops
+                        // cb = 1 - don't breaker
+                        // cb = 0 - break
                         let cb := 1
 
-                    // get the keccak hash to get the contents of the array
+                        // get the keccak hash to get the contents of the array
                         mstore(0x0, _preBytes.slot)
                         let sc := keccak256(0x0, 0x20)
 
                         let mc := add(_postBytes, 0x20)
                         let end := add(mc, mlength)
 
-                    // the next line is the loop condition:
-                    // while(uint256(mc < end) + cb == 2)
-                        for {} eq(add(lt(mc, end), cb), 2) {
+                        // the next line is the loop condition:
+                        // while(uint256(mc < end) + cb == 2)
+                        for {
+
+                        } eq(add(lt(mc, end), cb), 2) {
                             sc := add(sc, 1)
                             mc := add(mc, 0x20)
                         } {
                             if iszero(eq(sload(sc), mload(mc))) {
-                            // unsuccess:
+                                // unsuccess:
                                 success := 0
                                 cb := 0
                             }
@@ -642,7 +719,7 @@ library BytesLib {
                 }
             }
             default {
-            // unsuccess:
+                // unsuccess:
                 success := 0
             }
         }
@@ -651,6 +728,25 @@ library BytesLib {
     }
 }
 
+// File @layerzerolabs/solidity-examples/contracts/lzApp/interfaces/ILayerZeroReceiver.sol@v1.1.0
+
+// Original license: SPDX_License_Identifier: MIT
+
+pragma solidity >=0.5.0;
+
+interface ILayerZeroReceiver {
+    // @notice LayerZero endpoint will invoke this function to deliver the message on the destination
+    // @param _srcChainId - the source endpoint identifier
+    // @param _srcAddress - the source sending contract address from the source chain
+    // @param _nonce - the ordered message nonce
+    // @param _payload - the signed payload is the UA bytes has encoded to be sent
+    function lzReceive(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress,
+        uint64 _nonce,
+        bytes calldata _payload
+    ) external;
+}
 
 // File @openzeppelin/contracts/utils/Context.sol@v4.9.6
 
@@ -683,7 +779,6 @@ abstract contract Context {
     }
 }
 
-
 // File @openzeppelin/contracts/access/Ownable.sol@v4.9.6
 
 // Original license: SPDX_License_Identifier: MIT
@@ -706,7 +801,10 @@ pragma solidity ^0.8.0;
 abstract contract Ownable is Context {
     address private _owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
@@ -753,7 +851,10 @@ abstract contract Ownable is Context {
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(
+            newOwner != address(0),
+            "Ownable: new owner is the zero address"
+        );
         _transferOwnership(newOwner);
     }
 
@@ -768,25 +869,24 @@ abstract contract Ownable is Context {
     }
 }
 
-
-// File @layerzerolabs/solidity-examples/contracts/lzApp/LzApp.sol@v0.0.13
+// File @layerzerolabs/solidity-examples/contracts/lzApp/LzApp.sol@v1.1.0
 
 // Original license: SPDX_License_Identifier: MIT
 
 pragma solidity ^0.8.0;
 
-
-
-
-
 /*
  * a generic LzReceiver implementation
  */
-abstract contract LzApp is Ownable, ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
+abstract contract LzApp is
+    Ownable,
+    ILayerZeroReceiver,
+    ILayerZeroUserApplicationConfig
+{
     using BytesLib for bytes;
 
     // ua can not send payload larger than this by default, but it can be changed by the ua owner
-    uint constant public DEFAULT_PAYLOAD_SIZE_LIMIT = 10000;
+    uint public constant DEFAULT_PAYLOAD_SIZE_LIMIT = 10000;
 
     ILayerZeroEndpoint public immutable lzEndpoint;
     mapping(uint16 => bytes) public trustedRemoteLookup;
@@ -803,56 +903,124 @@ abstract contract LzApp is Ownable, ILayerZeroReceiver, ILayerZeroUserApplicatio
         lzEndpoint = ILayerZeroEndpoint(_endpoint);
     }
 
-    function lzReceive(uint16 _srcChainId, bytes calldata _srcAddress, uint64 _nonce, bytes calldata _payload) public virtual override {
+    function lzReceive(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress,
+        uint64 _nonce,
+        bytes calldata _payload
+    ) public virtual override {
         // lzReceive must be called by the endpoint for security
-        require(_msgSender() == address(lzEndpoint), "LzApp: invalid endpoint caller");
+        require(
+            _msgSender() == address(lzEndpoint),
+            "LzApp: invalid endpoint caller"
+        );
 
         bytes memory trustedRemote = trustedRemoteLookup[_srcChainId];
         // if will still block the message pathway from (srcChainId, srcAddress). should not receive message from untrusted remote.
-        require(_srcAddress.length == trustedRemote.length && trustedRemote.length > 0 && keccak256(_srcAddress) == keccak256(trustedRemote), "LzApp: invalid source sending contract");
+        require(
+            _srcAddress.length == trustedRemote.length &&
+                trustedRemote.length > 0 &&
+                keccak256(_srcAddress) == keccak256(trustedRemote),
+            "LzApp: invalid source sending contract"
+        );
 
         _blockingLzReceive(_srcChainId, _srcAddress, _nonce, _payload);
     }
 
     // abstract function - the default behaviour of LayerZero is blocking. See: NonblockingLzApp if you dont need to enforce ordered messaging
-    function _blockingLzReceive(uint16 _srcChainId, bytes memory _srcAddress, uint64 _nonce, bytes memory _payload) internal virtual;
+    function _blockingLzReceive(
+        uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint64 _nonce,
+        bytes memory _payload
+    ) internal virtual;
 
-    function _lzSend(uint16 _dstChainId, bytes memory _payload, address payable _refundAddress, address _zroPaymentAddress, bytes memory _adapterParams, uint _nativeFee) internal virtual {
+    function _lzSend(
+        uint16 _dstChainId,
+        bytes memory _payload,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes memory _adapterParams,
+        uint _nativeFee
+    ) internal virtual {
         bytes memory trustedRemote = trustedRemoteLookup[_dstChainId];
-        require(trustedRemote.length != 0, "LzApp: destination chain is not a trusted source");
+        require(
+            trustedRemote.length != 0,
+            "LzApp: destination chain is not a trusted source"
+        );
         _checkPayloadSize(_dstChainId, _payload.length);
-        lzEndpoint.send{value: _nativeFee}(_dstChainId, trustedRemote, _payload, _refundAddress, _zroPaymentAddress, _adapterParams);
+        lzEndpoint.send{value: _nativeFee}(
+            _dstChainId,
+            trustedRemote,
+            _payload,
+            _refundAddress,
+            _zroPaymentAddress,
+            _adapterParams
+        );
     }
 
-    function _checkGasLimit(uint16 _dstChainId, uint16 _type, bytes memory _adapterParams, uint _extraGas) internal view virtual {
+    function _checkGasLimit(
+        uint16 _dstChainId,
+        uint16 _type,
+        bytes memory _adapterParams,
+        uint _extraGas
+    ) internal view virtual {
         uint providedGasLimit = _getGasLimit(_adapterParams);
-        uint minGasLimit = minDstGasLookup[_dstChainId][_type] + _extraGas;
+        uint minGasLimit = minDstGasLookup[_dstChainId][_type];
         require(minGasLimit > 0, "LzApp: minGasLimit not set");
-        require(providedGasLimit >= minGasLimit, "LzApp: gas limit is too low");
+        require(
+            providedGasLimit >= minGasLimit + _extraGas,
+            "LzApp: gas limit is too low"
+        );
     }
 
-    function _getGasLimit(bytes memory _adapterParams) internal pure virtual returns (uint gasLimit) {
+    function _getGasLimit(
+        bytes memory _adapterParams
+    ) internal pure virtual returns (uint gasLimit) {
         require(_adapterParams.length >= 34, "LzApp: invalid adapterParams");
         assembly {
             gasLimit := mload(add(_adapterParams, 34))
         }
     }
 
-    function _checkPayloadSize(uint16 _dstChainId, uint _payloadSize) internal view virtual {
+    function _checkPayloadSize(
+        uint16 _dstChainId,
+        uint _payloadSize
+    ) internal view virtual {
         uint payloadSizeLimit = payloadSizeLimitLookup[_dstChainId];
-        if (payloadSizeLimit == 0) { // use default if not set
+        if (payloadSizeLimit == 0) {
+            // use default if not set
             payloadSizeLimit = DEFAULT_PAYLOAD_SIZE_LIMIT;
         }
-        require(_payloadSize <= payloadSizeLimit, "LzApp: payload size is too large");
+        require(
+            _payloadSize <= payloadSizeLimit,
+            "LzApp: payload size is too large"
+        );
     }
 
     //---------------------------UserApplication config----------------------------------------
-    function getConfig(uint16 _version, uint16 _chainId, address, uint _configType) external view returns (bytes memory) {
-        return lzEndpoint.getConfig(_version, _chainId, address(this), _configType);
+    function getConfig(
+        uint16 _version,
+        uint16 _chainId,
+        address,
+        uint _configType
+    ) external view returns (bytes memory) {
+        return
+            lzEndpoint.getConfig(
+                _version,
+                _chainId,
+                address(this),
+                _configType
+            );
     }
 
     // generic config for LayerZero user Application
-    function setConfig(uint16 _version, uint16 _chainId, uint _configType, bytes calldata _config) external override onlyOwner {
+    function setConfig(
+        uint16 _version,
+        uint16 _chainId,
+        uint _configType,
+        bytes calldata _config
+    ) external override onlyOwner {
         lzEndpoint.setConfig(_version, _chainId, _configType, _config);
     }
 
@@ -864,23 +1032,37 @@ abstract contract LzApp is Ownable, ILayerZeroReceiver, ILayerZeroUserApplicatio
         lzEndpoint.setReceiveVersion(_version);
     }
 
-    function forceResumeReceive(uint16 _srcChainId, bytes calldata _srcAddress) external override onlyOwner {
+    function forceResumeReceive(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress
+    ) external override onlyOwner {
         lzEndpoint.forceResumeReceive(_srcChainId, _srcAddress);
     }
 
     // _path = abi.encodePacked(remoteAddress, localAddress)
     // this function set the trusted path for the cross-chain communication
-    function setTrustedRemote(uint16 _remoteChainId, bytes calldata _path) external onlyOwner {
+    function setTrustedRemote(
+        uint16 _remoteChainId,
+        bytes calldata _path
+    ) external onlyOwner {
         trustedRemoteLookup[_remoteChainId] = _path;
         emit SetTrustedRemote(_remoteChainId, _path);
     }
 
-    function setTrustedRemoteAddress(uint16 _remoteChainId, bytes calldata _remoteAddress) external onlyOwner {
-        trustedRemoteLookup[_remoteChainId] = abi.encodePacked(_remoteAddress, address(this));
+    function setTrustedRemoteAddress(
+        uint16 _remoteChainId,
+        bytes calldata _remoteAddress
+    ) external onlyOwner {
+        trustedRemoteLookup[_remoteChainId] = abi.encodePacked(
+            _remoteAddress,
+            address(this)
+        );
         emit SetTrustedRemoteAddress(_remoteChainId, _remoteAddress);
     }
 
-    function getTrustedRemoteAddress(uint16 _remoteChainId) external view returns (bytes memory) {
+    function getTrustedRemoteAddress(
+        uint16 _remoteChainId
+    ) external view returns (bytes memory) {
         bytes memory path = trustedRemoteLookup[_remoteChainId];
         require(path.length != 0, "LzApp: no trusted path record");
         return path.slice(0, path.length - 20); // the last 20 bytes should be address(this)
@@ -891,33 +1073,41 @@ abstract contract LzApp is Ownable, ILayerZeroReceiver, ILayerZeroUserApplicatio
         emit SetPrecrime(_precrime);
     }
 
-    function setMinDstGas(uint16 _dstChainId, uint16 _packetType, uint _minGas) external onlyOwner {
-        require(_minGas > 0, "LzApp: invalid minGas");
+    function setMinDstGas(
+        uint16 _dstChainId,
+        uint16 _packetType,
+        uint _minGas
+    ) external onlyOwner {
         minDstGasLookup[_dstChainId][_packetType] = _minGas;
         emit SetMinDstGas(_dstChainId, _packetType, _minGas);
     }
 
     // if the size is 0, it means default size limit
-    function setPayloadSizeLimit(uint16 _dstChainId, uint _size) external onlyOwner {
+    function setPayloadSizeLimit(
+        uint16 _dstChainId,
+        uint _size
+    ) external onlyOwner {
         payloadSizeLimitLookup[_dstChainId] = _size;
     }
 
     //--------------------------- VIEW FUNCTION ----------------------------------------
-    function isTrustedRemote(uint16 _srcChainId, bytes calldata _srcAddress) external view returns (bool) {
+    function isTrustedRemote(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress
+    ) external view returns (bool) {
         bytes memory trustedSource = trustedRemoteLookup[_srcChainId];
         return keccak256(trustedSource) == keccak256(_srcAddress);
     }
 }
 
-
-// File @layerzerolabs/solidity-examples/contracts/util/ExcessivelySafeCall.sol@v0.0.13
+// File @layerzerolabs/solidity-examples/contracts/libraries/ExcessivelySafeCall.sol@v1.1.0
 
 // Original license: SPDX_License_Identifier: MIT
 pragma solidity >=0.7.6;
 
 library ExcessivelySafeCall {
-    uint256 constant LOW_28_MASK =
-    0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    uint constant LOW_28_MASK =
+        0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     /// @notice Use when you _really_ really _really_ don't trust the called
     /// contract. This prevents the called contract from causing reversion of
@@ -936,12 +1126,12 @@ library ExcessivelySafeCall {
     /// `_maxCopy` bytes.
     function excessivelySafeCall(
         address _target,
-        uint256 _gas,
+        uint _gas,
         uint16 _maxCopy,
         bytes memory _calldata
     ) internal returns (bool, bytes memory) {
         // set up for assembly call
-        uint256 _toCopy;
+        uint _toCopy;
         bool _success;
         bytes memory _returnData = new bytes(_maxCopy);
         // dispatch message to recipient
@@ -950,22 +1140,22 @@ library ExcessivelySafeCall {
         // returned by a malicious contract
         assembly {
             _success := call(
-            _gas, // gas
-            _target, // recipient
-            0, // ether value
-            add(_calldata, 0x20), // inloc
-            mload(_calldata), // inlen
-            0, // outloc
-            0 // outlen
+                _gas, // gas
+                _target, // recipient
+                0, // ether value
+                add(_calldata, 0x20), // inloc
+                mload(_calldata), // inlen
+                0, // outloc
+                0 // outlen
             )
-        // limit our copy to 256 bytes
+            // limit our copy to 256 bytes
             _toCopy := returndatasize()
             if gt(_toCopy, _maxCopy) {
                 _toCopy := _maxCopy
             }
-        // Store the length of the copied bytes
+            // Store the length of the copied bytes
             mstore(_returnData, _toCopy)
-        // copy the bytes from returndata[0:_toCopy]
+            // copy the bytes from returndata[0:_toCopy]
             returndatacopy(add(_returnData, 0x20), 0, _toCopy)
         }
         return (_success, _returnData);
@@ -988,12 +1178,12 @@ library ExcessivelySafeCall {
     /// `_maxCopy` bytes.
     function excessivelySafeStaticCall(
         address _target,
-        uint256 _gas,
+        uint _gas,
         uint16 _maxCopy,
         bytes memory _calldata
     ) internal view returns (bool, bytes memory) {
         // set up for assembly call
-        uint256 _toCopy;
+        uint _toCopy;
         bool _success;
         bytes memory _returnData = new bytes(_maxCopy);
         // dispatch message to recipient
@@ -1002,21 +1192,21 @@ library ExcessivelySafeCall {
         // returned by a malicious contract
         assembly {
             _success := staticcall(
-            _gas, // gas
-            _target, // recipient
-            add(_calldata, 0x20), // inloc
-            mload(_calldata), // inlen
-            0, // outloc
-            0 // outlen
+                _gas, // gas
+                _target, // recipient
+                add(_calldata, 0x20), // inloc
+                mload(_calldata), // inlen
+                0, // outloc
+                0 // outlen
             )
-        // limit our copy to 256 bytes
+            // limit our copy to 256 bytes
             _toCopy := returndatasize()
             if gt(_toCopy, _maxCopy) {
                 _toCopy := _maxCopy
             }
-        // Store the length of the copied bytes
+            // Store the length of the copied bytes
             mstore(_returnData, _toCopy)
-        // copy the bytes from returndata[0:_toCopy]
+            // copy the bytes from returndata[0:_toCopy]
             returndatacopy(add(_returnData, 0x20), 0, _toCopy)
         }
         return (_success, _returnData);
@@ -1031,17 +1221,17 @@ library ExcessivelySafeCall {
      * @param _newSelector The new 4-byte selector
      * @param _buf The encoded contract args
      */
-    function swapSelector(bytes4 _newSelector, bytes memory _buf)
-    internal
-    pure
-    {
+    function swapSelector(
+        bytes4 _newSelector,
+        bytes memory _buf
+    ) internal pure {
         require(_buf.length >= 4);
-        uint256 _mask = LOW_28_MASK;
+        uint _mask = LOW_28_MASK;
         assembly {
-        // load the first word of
+            // load the first word of
             let _word := mload(add(_buf, 0x20))
-        // mask out the top 4 bytes
-        // /x
+            // mask out the top 4 bytes
+            // /x
             _word := and(_word, _mask)
             _word := or(_newSelector, _word)
             mstore(add(_buf, 0x20), _word)
@@ -1049,13 +1239,11 @@ library ExcessivelySafeCall {
     }
 }
 
-
-// File @layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol@v0.0.13
+// File @layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol@v1.1.0
 
 // Original license: SPDX_License_Identifier: MIT
 
 pragma solidity ^0.8.0;
-
 
 /*
  * the default LayerZero messaging behaviour is blocking, i.e. any failed message will block the channel
@@ -1067,39 +1255,101 @@ abstract contract NonblockingLzApp is LzApp {
 
     constructor(address _endpoint) LzApp(_endpoint) {}
 
-    mapping(uint16 => mapping(bytes => mapping(uint64 => bytes32))) public failedMessages;
+    mapping(uint16 => mapping(bytes => mapping(uint64 => bytes32)))
+        public failedMessages;
 
-    event MessageFailed(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes _payload, bytes _reason);
-    event RetryMessageSuccess(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes32 _payloadHash);
+    event MessageFailed(
+        uint16 _srcChainId,
+        bytes _srcAddress,
+        uint64 _nonce,
+        bytes _payload,
+        bytes _reason
+    );
+    event RetryMessageSuccess(
+        uint16 _srcChainId,
+        bytes _srcAddress,
+        uint64 _nonce,
+        bytes32 _payloadHash
+    );
 
     // overriding the virtual function in LzReceiver
-    function _blockingLzReceive(uint16 _srcChainId, bytes memory _srcAddress, uint64 _nonce, bytes memory _payload) internal virtual override {
-        (bool success, bytes memory reason) = address(this).excessivelySafeCall(gasleft(), 150, abi.encodeWithSelector(this.nonblockingLzReceive.selector, _srcChainId, _srcAddress, _nonce, _payload));
-        // try-catch all errors/exceptions
+    function _blockingLzReceive(
+        uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint64 _nonce,
+        bytes memory _payload
+    ) internal virtual override {
+        (bool success, bytes memory reason) = address(this).excessivelySafeCall(
+            gasleft(),
+            150,
+            abi.encodeWithSelector(
+                this.nonblockingLzReceive.selector,
+                _srcChainId,
+                _srcAddress,
+                _nonce,
+                _payload
+            )
+        );
         if (!success) {
-            _storeFailedMessage(_srcChainId, _srcAddress, _nonce, _payload, reason);
+            _storeFailedMessage(
+                _srcChainId,
+                _srcAddress,
+                _nonce,
+                _payload,
+                reason
+            );
         }
     }
 
-    function _storeFailedMessage(uint16 _srcChainId, bytes memory _srcAddress, uint64 _nonce, bytes memory _payload, bytes memory _reason) internal virtual {
+    function _storeFailedMessage(
+        uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint64 _nonce,
+        bytes memory _payload,
+        bytes memory _reason
+    ) internal virtual {
         failedMessages[_srcChainId][_srcAddress][_nonce] = keccak256(_payload);
         emit MessageFailed(_srcChainId, _srcAddress, _nonce, _payload, _reason);
     }
 
-    function nonblockingLzReceive(uint16 _srcChainId, bytes calldata _srcAddress, uint64 _nonce, bytes calldata _payload) public virtual {
+    function nonblockingLzReceive(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress,
+        uint64 _nonce,
+        bytes calldata _payload
+    ) public virtual {
         // only internal transaction
-        require(_msgSender() == address(this), "NonblockingLzApp: caller must be LzApp");
+        require(
+            _msgSender() == address(this),
+            "NonblockingLzApp: caller must be LzApp"
+        );
         _nonblockingLzReceive(_srcChainId, _srcAddress, _nonce, _payload);
     }
 
     //@notice override this function
-    function _nonblockingLzReceive(uint16 _srcChainId, bytes memory _srcAddress, uint64 _nonce, bytes memory _payload) internal virtual;
+    function _nonblockingLzReceive(
+        uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint64 _nonce,
+        bytes memory _payload
+    ) internal virtual;
 
-    function retryMessage(uint16 _srcChainId, bytes calldata _srcAddress, uint64 _nonce, bytes calldata _payload) public payable virtual {
+    function retryMessage(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress,
+        uint64 _nonce,
+        bytes calldata _payload
+    ) public payable virtual {
         // assert there is message to retry
         bytes32 payloadHash = failedMessages[_srcChainId][_srcAddress][_nonce];
-        require(payloadHash != bytes32(0), "NonblockingLzApp: no stored message");
-        require(keccak256(_payload) == payloadHash, "NonblockingLzApp: invalid payload");
+        require(
+            payloadHash != bytes32(0),
+            "NonblockingLzApp: no stored message"
+        );
+        require(
+            keccak256(_payload) == payloadHash,
+            "NonblockingLzApp: invalid payload"
+        );
         // clear the stored message
         failedMessages[_srcChainId][_srcAddress][_nonce] = bytes32(0);
         // execute the message. revert if it fails again
@@ -1107,7 +1357,6 @@ abstract contract NonblockingLzApp is LzApp {
         emit RetryMessageSuccess(_srcChainId, _srcAddress, _nonce, payloadHash);
     }
 }
-
 
 // File @openzeppelin/contracts/utils/introspection/IERC165.sol@v4.9.6
 
@@ -1137,8 +1386,7 @@ interface IERC165 {
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
 }
 
-
-// File @layerzerolabs/solidity-examples/contracts/token/onft/IONFT721Core.sol@v0.0.13
+// File @layerzerolabs/solidity-examples/contracts/token/onft721/interfaces/IONFT721Core.sol@v1.1.0
 
 // Original license: SPDX_License_Identifier: MIT
 
@@ -1152,11 +1400,27 @@ interface IONFT721Core is IERC165 {
      * @dev Emitted when `_tokenIds[]` are moved from the `_sender` to (`_dstChainId`, `_toAddress`)
      * `_nonce` is the outbound nonce from
      */
-    event SendToChain(uint16 indexed _dstChainId, address indexed _from, bytes indexed _toAddress, uint[] _tokenIds);
-    event ReceiveFromChain(uint16 indexed _srcChainId, bytes indexed _srcAddress, address indexed _toAddress, uint[] _tokenIds);
-    event SetMinGasToTransferAndStore(uint256 _minGasToTransferAndStore);
-    event SetDstChainIdToTransferGas(uint16 _dstChainId, uint256 _dstChainIdToTransferGas);
-    event SetDstChainIdToBatchLimit(uint16 _dstChainId, uint256 _dstChainIdToBatchLimit);
+    event SendToChain(
+        uint16 indexed _dstChainId,
+        address indexed _from,
+        bytes indexed _toAddress,
+        uint[] _tokenIds
+    );
+    event ReceiveFromChain(
+        uint16 indexed _srcChainId,
+        bytes indexed _srcAddress,
+        address indexed _toAddress,
+        uint[] _tokenIds
+    );
+    event SetMinGasToTransferAndStore(uint _minGasToTransferAndStore);
+    event SetDstChainIdToTransferGas(
+        uint16 _dstChainId,
+        uint _dstChainIdToTransferGas
+    );
+    event SetDstChainIdToBatchLimit(
+        uint16 _dstChainId,
+        uint _dstChainIdToBatchLimit
+    );
 
     /**
      * @dev Emitted when `_payload` was received from lz, but not enough gas to deliver all tokenIds
@@ -1173,14 +1437,31 @@ interface IONFT721Core is IERC165 {
      * `_zroPaymentAddress` set to address(0x0) if not paying in ZRO (LayerZero Token)
      * `_adapterParams` is a flexible bytes array to indicate messaging adapter services
      */
-    function sendFrom(address _from, uint16 _dstChainId, bytes calldata _toAddress, uint _tokenId, address payable _refundAddress, address _zroPaymentAddress, bytes calldata _adapterParams) external payable;
+    function sendFrom(
+        address _from,
+        uint16 _dstChainId,
+        bytes calldata _toAddress,
+        uint _tokenId,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes calldata _adapterParams
+    ) external payable;
+
     /**
      * @dev send tokens `_tokenIds[]` to (`_dstChainId`, `_toAddress`) from `_from`
      * `_toAddress` can be any size depending on the `dstChainId`.
      * `_zroPaymentAddress` set to address(0x0) if not paying in ZRO (LayerZero Token)
      * `_adapterParams` is a flexible bytes array to indicate messaging adapter services
      */
-    function sendBatchFrom(address _from, uint16 _dstChainId, bytes calldata _toAddress, uint[] calldata _tokenIds, address payable _refundAddress, address _zroPaymentAddress, bytes calldata _adapterParams) external payable;
+    function sendBatchFrom(
+        address _from,
+        uint16 _dstChainId,
+        bytes calldata _toAddress,
+        uint[] calldata _tokenIds,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes calldata _adapterParams
+    ) external payable;
 
     /**
      * @dev estimate send token `_tokenId` to (`_dstChainId`, `_toAddress`)
@@ -1190,7 +1471,14 @@ interface IONFT721Core is IERC165 {
      * _useZro - indicates to use zro to pay L0 fees
      * _adapterParams - flexible bytes array to indicate messaging adapter services in L0
      */
-    function estimateSendFee(uint16 _dstChainId, bytes calldata _toAddress, uint _tokenId, bool _useZro, bytes calldata _adapterParams) external view returns (uint nativeFee, uint zroFee);
+    function estimateSendFee(
+        uint16 _dstChainId,
+        bytes calldata _toAddress,
+        uint _tokenId,
+        bool _useZro,
+        bytes calldata _adapterParams
+    ) external view returns (uint nativeFee, uint zroFee);
+
     /**
      * @dev estimate send token `_tokenId` to (`_dstChainId`, `_toAddress`)
      * _dstChainId - L0 defined chain id to send tokens too
@@ -1199,9 +1487,14 @@ interface IONFT721Core is IERC165 {
      * _useZro - indicates to use zro to pay L0 fees
      * _adapterParams - flexible bytes array to indicate messaging adapter services in L0
      */
-    function estimateSendBatchFee(uint16 _dstChainId, bytes calldata _toAddress, uint[] calldata _tokenIds, bool _useZro, bytes calldata _adapterParams) external view returns (uint nativeFee, uint zroFee);
+    function estimateSendBatchFee(
+        uint16 _dstChainId,
+        bytes calldata _toAddress,
+        uint[] calldata _tokenIds,
+        bool _useZro,
+        bytes calldata _adapterParams
+    ) external view returns (uint nativeFee, uint zroFee);
 }
-
 
 // File @openzeppelin/contracts/token/ERC721/IERC721.sol@v4.9.6
 
@@ -1217,17 +1510,29 @@ interface IERC721 is IERC165 {
     /**
      * @dev Emitted when `tokenId` token is transferred from `from` to `to`.
      */
-    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 indexed tokenId
+    );
 
     /**
      * @dev Emitted when `owner` enables `approved` to manage the `tokenId` token.
      */
-    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+    event Approval(
+        address indexed owner,
+        address indexed approved,
+        uint256 indexed tokenId
+    );
 
     /**
      * @dev Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.
      */
-    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+    event ApprovalForAll(
+        address indexed owner,
+        address indexed operator,
+        bool approved
+    );
 
     /**
      * @dev Returns the number of tokens in ``owner``'s account.
@@ -1256,7 +1561,12 @@ interface IERC721 is IERC165 {
      *
      * Emits a {Transfer} event.
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes calldata data) external;
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes calldata data
+    ) external;
 
     /**
      * @dev Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
@@ -1272,7 +1582,11 @@ interface IERC721 is IERC165 {
      *
      * Emits a {Transfer} event.
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId) external;
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) external;
 
     /**
      * @dev Transfers `tokenId` token from `from` to `to`.
@@ -1326,23 +1640,26 @@ interface IERC721 is IERC165 {
      *
      * - `tokenId` must exist.
      */
-    function getApproved(uint256 tokenId) external view returns (address operator);
+    function getApproved(
+        uint256 tokenId
+    ) external view returns (address operator);
 
     /**
      * @dev Returns if the `operator` is allowed to manage all of the assets of `owner`.
      *
      * See {setApprovalForAll}
      */
-    function isApprovedForAll(address owner, address operator) external view returns (bool);
+    function isApprovedForAll(
+        address owner,
+        address operator
+    ) external view returns (bool);
 }
 
-
-// File @layerzerolabs/solidity-examples/contracts/token/onft/IONFT721.sol@v0.0.13
+// File @layerzerolabs/solidity-examples/contracts/token/onft721/interfaces/IONFT721.sol@v1.1.0
 
 // Original license: SPDX_License_Identifier: MIT
 
 pragma solidity >=0.5.0;
-
 
 /**
  * @dev Interface of the ONFT standard
@@ -1350,7 +1667,6 @@ pragma solidity >=0.5.0;
 interface IONFT721 is IONFT721Core, IERC721 {
 
 }
-
 
 // File @openzeppelin/contracts/security/ReentrancyGuard.sol@v4.9.6
 
@@ -1432,7 +1748,6 @@ abstract contract ReentrancyGuard {
     }
 }
 
-
 // File @openzeppelin/contracts/utils/introspection/ERC165.sol@v4.9.6
 
 // Original license: SPDX_License_Identifier: MIT
@@ -1458,66 +1773,149 @@ abstract contract ERC165 is IERC165 {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override returns (bool) {
         return interfaceId == type(IERC165).interfaceId;
     }
 }
 
-
-// File @layerzerolabs/solidity-examples/contracts/token/onft/ONFT721Core.sol@v0.0.13
+// File @layerzerolabs/solidity-examples/contracts/token/onft721/ONFT721Core.sol@v1.1.0
 
 // Original license: SPDX_License_Identifier: MIT
 
 pragma solidity ^0.8.0;
 
-
-
-
-abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONFT721Core {
+abstract contract ONFT721Core is
+    NonblockingLzApp,
+    ERC165,
+    ReentrancyGuard,
+    IONFT721Core
+{
     uint16 public constant FUNCTION_TYPE_SEND = 1;
 
     struct StoredCredit {
         uint16 srcChainId;
         address toAddress;
-        uint256 index; // which index of the tokenIds remain
+        uint index; // which index of the tokenIds remain
         bool creditsRemain;
     }
 
-    uint256 public minGasToTransferAndStore; // min amount of gas required to transfer, and also store the payload
-    mapping(uint16 => uint256) public dstChainIdToBatchLimit;
-    mapping(uint16 => uint256) public dstChainIdToTransferGas; // per transfer amount of gas required to mint/transfer on the dst
+    uint public minGasToTransferAndStore; // min amount of gas required to transfer, and also store the payload
+    mapping(uint16 => uint) public dstChainIdToBatchLimit;
+    mapping(uint16 => uint) public dstChainIdToTransferGas; // per transfer amount of gas required to mint/transfer on the dst
     mapping(bytes32 => StoredCredit) public storedCredits;
 
-    constructor(uint256 _minGasToTransferAndStore, address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {
-        require(_minGasToTransferAndStore > 0, "minGasToTransferAndStore must be > 0");
+    constructor(
+        uint _minGasToTransferAndStore,
+        address _lzEndpoint
+    ) NonblockingLzApp(_lzEndpoint) {
+        require(
+            _minGasToTransferAndStore > 0,
+            "minGasToTransferAndStore must be > 0"
+        );
         minGasToTransferAndStore = _minGasToTransferAndStore;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
-        return interfaceId == type(IONFT721Core).interfaceId || super.supportsInterface(interfaceId);
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC165, IERC165) returns (bool) {
+        return
+            interfaceId == type(IONFT721Core).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
-    function estimateSendFee(uint16 _dstChainId, bytes memory _toAddress, uint _tokenId, bool _useZro, bytes memory _adapterParams) public view virtual override returns (uint nativeFee, uint zroFee) {
-        return estimateSendBatchFee(_dstChainId, _toAddress, _toSingletonArray(_tokenId), _useZro, _adapterParams);
+    function estimateSendFee(
+        uint16 _dstChainId,
+        bytes memory _toAddress,
+        uint _tokenId,
+        bool _useZro,
+        bytes memory _adapterParams
+    ) public view virtual override returns (uint nativeFee, uint zroFee) {
+        return
+            estimateSendBatchFee(
+                _dstChainId,
+                _toAddress,
+                _toSingletonArray(_tokenId),
+                _useZro,
+                _adapterParams
+            );
     }
 
-    function estimateSendBatchFee(uint16 _dstChainId, bytes memory _toAddress, uint[] memory _tokenIds, bool _useZro, bytes memory _adapterParams) public view virtual override returns (uint nativeFee, uint zroFee) {
+    function estimateSendBatchFee(
+        uint16 _dstChainId,
+        bytes memory _toAddress,
+        uint[] memory _tokenIds,
+        bool _useZro,
+        bytes memory _adapterParams
+    ) public view virtual override returns (uint nativeFee, uint zroFee) {
         bytes memory payload = abi.encode(_toAddress, _tokenIds);
-        return lzEndpoint.estimateFees(_dstChainId, address(this), payload, _useZro, _adapterParams);
+        return
+            lzEndpoint.estimateFees(
+                _dstChainId,
+                address(this),
+                payload,
+                _useZro,
+                _adapterParams
+            );
     }
 
-    function sendFrom(address _from, uint16 _dstChainId, bytes memory _toAddress, uint _tokenId, address payable _refundAddress, address _zroPaymentAddress, bytes memory _adapterParams) public payable virtual override {
-        _send(_from, _dstChainId, _toAddress, _toSingletonArray(_tokenId), _refundAddress, _zroPaymentAddress, _adapterParams);
+    function sendFrom(
+        address _from,
+        uint16 _dstChainId,
+        bytes memory _toAddress,
+        uint _tokenId,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes memory _adapterParams
+    ) public payable virtual override {
+        _send(
+            _from,
+            _dstChainId,
+            _toAddress,
+            _toSingletonArray(_tokenId),
+            _refundAddress,
+            _zroPaymentAddress,
+            _adapterParams
+        );
     }
 
-    function sendBatchFrom(address _from, uint16 _dstChainId, bytes memory _toAddress, uint[] memory _tokenIds, address payable _refundAddress, address _zroPaymentAddress, bytes memory _adapterParams) public payable virtual override {
-        _send(_from, _dstChainId, _toAddress, _tokenIds, _refundAddress, _zroPaymentAddress, _adapterParams);
+    function sendBatchFrom(
+        address _from,
+        uint16 _dstChainId,
+        bytes memory _toAddress,
+        uint[] memory _tokenIds,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes memory _adapterParams
+    ) public payable virtual override {
+        _send(
+            _from,
+            _dstChainId,
+            _toAddress,
+            _tokenIds,
+            _refundAddress,
+            _zroPaymentAddress,
+            _adapterParams
+        );
     }
 
-    function _send(address _from, uint16 _dstChainId, bytes memory _toAddress, uint[] memory _tokenIds, address payable _refundAddress, address _zroPaymentAddress, bytes memory _adapterParams) internal virtual {
+    function _send(
+        address _from,
+        uint16 _dstChainId,
+        bytes memory _toAddress,
+        uint[] memory _tokenIds,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes memory _adapterParams
+    ) internal virtual {
         // allow 1 by default
         require(_tokenIds.length > 0, "tokenIds[] is empty");
-        require(_tokenIds.length == 1 || _tokenIds.length <= dstChainIdToBatchLimit[_dstChainId], "batch size exceeds dst batch limit");
+        require(
+            _tokenIds.length == 1 ||
+                _tokenIds.length <= dstChainIdToBatchLimit[_dstChainId],
+            "batch size exceeds dst batch limit"
+        );
 
         for (uint i = 0; i < _tokenIds.length; i++) {
             _debitFrom(_from, _dstChainId, _toAddress, _tokenIds[i]);
@@ -1525,19 +1923,34 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONF
 
         bytes memory payload = abi.encode(_toAddress, _tokenIds);
 
-        _checkGasLimit(_dstChainId, FUNCTION_TYPE_SEND, _adapterParams, dstChainIdToTransferGas[_dstChainId] * _tokenIds.length);
-        _lzSend(_dstChainId, payload, _refundAddress, _zroPaymentAddress, _adapterParams, msg.value);
+        _checkGasLimit(
+            _dstChainId,
+            FUNCTION_TYPE_SEND,
+            _adapterParams,
+            dstChainIdToTransferGas[_dstChainId] * _tokenIds.length
+        );
+        _lzSend(
+            _dstChainId,
+            payload,
+            _refundAddress,
+            _zroPaymentAddress,
+            _adapterParams,
+            msg.value
+        );
         emit SendToChain(_dstChainId, _from, _toAddress, _tokenIds);
     }
 
     function _nonblockingLzReceive(
         uint16 _srcChainId,
         bytes memory _srcAddress,
-        uint64, /*_nonce*/
+        uint64 /*_nonce*/,
         bytes memory _payload
     ) internal virtual override {
         // decode and load the toAddress
-        (bytes memory toAddressBytes, uint[] memory tokenIds) = abi.decode(_payload, (bytes, uint[]));
+        (bytes memory toAddressBytes, uint[] memory tokenIds) = abi.decode(
+            _payload,
+            (bytes, uint[])
+        );
 
         address toAddress;
         assembly {
@@ -1548,7 +1961,12 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONF
         if (nextIndex < tokenIds.length) {
             // not enough gas to complete transfers, store to be cleared in another tx
             bytes32 hashedPayload = keccak256(_payload);
-            storedCredits[hashedPayload] = StoredCredit(_srcChainId, toAddress, nextIndex, true);
+            storedCredits[hashedPayload] = StoredCredit(
+                _srcChainId,
+                toAddress,
+                nextIndex,
+                true
+            );
             emit CreditStored(hashedPayload, _payload);
         }
 
@@ -1558,12 +1976,23 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONF
     // Public function for anyone to clear and deliver the remaining batch sent tokenIds
     function clearCredits(bytes memory _payload) external virtual nonReentrant {
         bytes32 hashedPayload = keccak256(_payload);
-        require(storedCredits[hashedPayload].creditsRemain, "no credits stored");
+        require(
+            storedCredits[hashedPayload].creditsRemain,
+            "no credits stored"
+        );
 
         (, uint[] memory tokenIds) = abi.decode(_payload, (bytes, uint[]));
 
-        uint nextIndex = _creditTill(storedCredits[hashedPayload].srcChainId, storedCredits[hashedPayload].toAddress, storedCredits[hashedPayload].index, tokenIds);
-        require(nextIndex > storedCredits[hashedPayload].index, "not enough gas to process credit transfer");
+        uint nextIndex = _creditTill(
+            storedCredits[hashedPayload].srcChainId,
+            storedCredits[hashedPayload].toAddress,
+            storedCredits[hashedPayload].index,
+            tokenIds
+        );
+        require(
+            nextIndex > storedCredits[hashedPayload].index,
+            "not enough gas to process credit transfer"
+        );
 
         if (nextIndex == tokenIds.length) {
             // cleared the credits, delete the element
@@ -1571,13 +2000,23 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONF
             emit CreditCleared(hashedPayload);
         } else {
             // store the next index to mint
-            storedCredits[hashedPayload] = StoredCredit(storedCredits[hashedPayload].srcChainId, storedCredits[hashedPayload].toAddress, nextIndex, true);
+            storedCredits[hashedPayload] = StoredCredit(
+                storedCredits[hashedPayload].srcChainId,
+                storedCredits[hashedPayload].toAddress,
+                nextIndex,
+                true
+            );
         }
     }
 
     // When a srcChain has the ability to transfer more chainIds in a single tx than the dst can do.
     // Needs the ability to iterate and stop if the minGasToTransferAndStore is not met
-    function _creditTill(uint16 _srcChainId, address _toAddress, uint _startIndex, uint[] memory _tokenIds) internal returns (uint256){
+    function _creditTill(
+        uint16 _srcChainId,
+        address _toAddress,
+        uint _startIndex,
+        uint[] memory _tokenIds
+    ) internal returns (uint) {
         uint i = _startIndex;
         while (i < _tokenIds.length) {
             // if not enough gas to process, store this index for next loop
@@ -1592,37 +2031,64 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONF
         return i;
     }
 
-    function setMinGasToTransferAndStore(uint256 _minGasToTransferAndStore) external onlyOwner {
-        require(_minGasToTransferAndStore > 0, "minGasToTransferAndStore must be > 0");
+    function setMinGasToTransferAndStore(
+        uint _minGasToTransferAndStore
+    ) external onlyOwner {
+        require(
+            _minGasToTransferAndStore > 0,
+            "minGasToTransferAndStore must be > 0"
+        );
         minGasToTransferAndStore = _minGasToTransferAndStore;
         emit SetMinGasToTransferAndStore(_minGasToTransferAndStore);
     }
 
     // ensures enough gas in adapter params to handle batch transfer gas amounts on the dst
-    function setDstChainIdToTransferGas(uint16 _dstChainId, uint256 _dstChainIdToTransferGas) external onlyOwner {
-        require(_dstChainIdToTransferGas > 0, "dstChainIdToTransferGas must be > 0");
+    function setDstChainIdToTransferGas(
+        uint16 _dstChainId,
+        uint _dstChainIdToTransferGas
+    ) external onlyOwner {
+        require(
+            _dstChainIdToTransferGas > 0,
+            "dstChainIdToTransferGas must be > 0"
+        );
         dstChainIdToTransferGas[_dstChainId] = _dstChainIdToTransferGas;
         emit SetDstChainIdToTransferGas(_dstChainId, _dstChainIdToTransferGas);
     }
 
     // limit on src the amount of tokens to batch send
-    function setDstChainIdToBatchLimit(uint16 _dstChainId, uint256 _dstChainIdToBatchLimit) external onlyOwner {
-        require(_dstChainIdToBatchLimit > 0, "dstChainIdToBatchLimit must be > 0");
+    function setDstChainIdToBatchLimit(
+        uint16 _dstChainId,
+        uint _dstChainIdToBatchLimit
+    ) external onlyOwner {
+        require(
+            _dstChainIdToBatchLimit > 0,
+            "dstChainIdToBatchLimit must be > 0"
+        );
         dstChainIdToBatchLimit[_dstChainId] = _dstChainIdToBatchLimit;
         emit SetDstChainIdToBatchLimit(_dstChainId, _dstChainIdToBatchLimit);
     }
 
-    function _debitFrom(address _from, uint16 _dstChainId, bytes memory _toAddress, uint _tokenId) internal virtual;
+    function _debitFrom(
+        address _from,
+        uint16 _dstChainId,
+        bytes memory _toAddress,
+        uint _tokenId
+    ) internal virtual;
 
-    function _creditTo(uint16 _srcChainId, address _toAddress, uint _tokenId) internal virtual;
+    function _creditTo(
+        uint16 _srcChainId,
+        address _toAddress,
+        uint _tokenId
+    ) internal virtual;
 
-    function _toSingletonArray(uint element) internal pure returns (uint[] memory) {
+    function _toSingletonArray(
+        uint element
+    ) internal pure returns (uint[] memory) {
         uint[] memory array = new uint[](1);
         array[0] = element;
         return array;
     }
 }
-
 
 // File @openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol@v4.9.6
 
@@ -1651,7 +2117,6 @@ interface IERC721Metadata is IERC721 {
      */
     function tokenURI(uint256 tokenId) external view returns (string memory);
 }
-
 
 // File @openzeppelin/contracts/token/ERC721/IERC721Receiver.sol@v4.9.6
 
@@ -1682,7 +2147,6 @@ interface IERC721Receiver {
         bytes calldata data
     ) external returns (bytes4);
 }
-
 
 // File @openzeppelin/contracts/utils/Address.sol@v4.9.6
 
@@ -1750,10 +2214,16 @@ library Address {
      * https://solidity.readthedocs.io/en/v0.8.0/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
      */
     function sendValue(address payable recipient, uint256 amount) internal {
-        require(address(this).balance >= amount, "Address: insufficient balance");
+        require(
+            address(this).balance >= amount,
+            "Address: insufficient balance"
+        );
 
         (bool success, ) = recipient.call{value: amount}("");
-        require(success, "Address: unable to send value, recipient may have reverted");
+        require(
+            success,
+            "Address: unable to send value, recipient may have reverted"
+        );
     }
 
     /**
@@ -1774,8 +2244,17 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
-        return functionCallWithValue(target, data, 0, "Address: low-level call failed");
+    function functionCall(
+        address target,
+        bytes memory data
+    ) internal returns (bytes memory) {
+        return
+            functionCallWithValue(
+                target,
+                data,
+                0,
+                "Address: low-level call failed"
+            );
     }
 
     /**
@@ -1803,8 +2282,18 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
-        return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value
+    ) internal returns (bytes memory) {
+        return
+            functionCallWithValue(
+                target,
+                data,
+                value,
+                "Address: low-level call with value failed"
+            );
     }
 
     /**
@@ -1819,9 +2308,20 @@ library Address {
         uint256 value,
         string memory errorMessage
     ) internal returns (bytes memory) {
-        require(address(this).balance >= value, "Address: insufficient balance for call");
-        (bool success, bytes memory returndata) = target.call{value: value}(data);
-        return verifyCallResultFromTarget(target, success, returndata, errorMessage);
+        require(
+            address(this).balance >= value,
+            "Address: insufficient balance for call"
+        );
+        (bool success, bytes memory returndata) = target.call{value: value}(
+            data
+        );
+        return
+            verifyCallResultFromTarget(
+                target,
+                success,
+                returndata,
+                errorMessage
+            );
     }
 
     /**
@@ -1830,8 +2330,16 @@ library Address {
      *
      * _Available since v3.3._
      */
-    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
-        return functionStaticCall(target, data, "Address: low-level static call failed");
+    function functionStaticCall(
+        address target,
+        bytes memory data
+    ) internal view returns (bytes memory) {
+        return
+            functionStaticCall(
+                target,
+                data,
+                "Address: low-level static call failed"
+            );
     }
 
     /**
@@ -1846,7 +2354,13 @@ library Address {
         string memory errorMessage
     ) internal view returns (bytes memory) {
         (bool success, bytes memory returndata) = target.staticcall(data);
-        return verifyCallResultFromTarget(target, success, returndata, errorMessage);
+        return
+            verifyCallResultFromTarget(
+                target,
+                success,
+                returndata,
+                errorMessage
+            );
     }
 
     /**
@@ -1855,8 +2369,16 @@ library Address {
      *
      * _Available since v3.4._
      */
-    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
-        return functionDelegateCall(target, data, "Address: low-level delegate call failed");
+    function functionDelegateCall(
+        address target,
+        bytes memory data
+    ) internal returns (bytes memory) {
+        return
+            functionDelegateCall(
+                target,
+                data,
+                "Address: low-level delegate call failed"
+            );
     }
 
     /**
@@ -1871,7 +2393,13 @@ library Address {
         string memory errorMessage
     ) internal returns (bytes memory) {
         (bool success, bytes memory returndata) = target.delegatecall(data);
-        return verifyCallResultFromTarget(target, success, returndata, errorMessage);
+        return
+            verifyCallResultFromTarget(
+                target,
+                success,
+                returndata,
+                errorMessage
+            );
     }
 
     /**
@@ -1916,7 +2444,10 @@ library Address {
         }
     }
 
-    function _revert(bytes memory returndata, string memory errorMessage) private pure {
+    function _revert(
+        bytes memory returndata,
+        string memory errorMessage
+    ) private pure {
         // Look for revert reason and bubble it up if present
         if (returndata.length > 0) {
             // The easiest way to bubble the revert reason is using memory via assembly
@@ -1930,7 +2461,6 @@ library Address {
         }
     }
 }
-
 
 // File @openzeppelin/contracts/utils/math/Math.sol@v4.9.6
 
@@ -1988,7 +2518,11 @@ library Math {
      * @dev Original credit to Remco Bloemen under MIT license (https://xn--2-umb.com/21/muldiv)
      * with further edits by Uniswap Labs also under MIT license.
      */
-    function mulDiv(uint256 x, uint256 y, uint256 denominator) internal pure returns (uint256 result) {
+    function mulDiv(
+        uint256 x,
+        uint256 y,
+        uint256 denominator
+    ) internal pure returns (uint256 result) {
         unchecked {
             // 512-bit multiply [prod1 prod0] = x * y. Compute the product mod 2^256 and mod 2^256 - 1, then use
             // use the Chinese Remainder Theorem to reconstruct the 512 bit result. The result is stored in two 256
@@ -2072,7 +2606,12 @@ library Math {
     /**
      * @notice Calculates x * y / denominator with full precision, following the selected rounding direction.
      */
-    function mulDiv(uint256 x, uint256 y, uint256 denominator, Rounding rounding) internal pure returns (uint256) {
+    function mulDiv(
+        uint256 x,
+        uint256 y,
+        uint256 denominator,
+        Rounding rounding
+    ) internal pure returns (uint256) {
         uint256 result = mulDiv(x, y, denominator);
         if (rounding == Rounding.Up && mulmod(x, y, denominator) > 0) {
             result += 1;
@@ -2121,10 +2660,15 @@ library Math {
     /**
      * @notice Calculates sqrt(a), following the selected rounding direction.
      */
-    function sqrt(uint256 a, Rounding rounding) internal pure returns (uint256) {
+    function sqrt(
+        uint256 a,
+        Rounding rounding
+    ) internal pure returns (uint256) {
         unchecked {
             uint256 result = sqrt(a);
-            return result + (rounding == Rounding.Up && result * result < a ? 1 : 0);
+            return
+                result +
+                (rounding == Rounding.Up && result * result < a ? 1 : 0);
         }
     }
 
@@ -2174,10 +2718,15 @@ library Math {
      * @dev Return the log in base 2, following the selected rounding direction, of a positive value.
      * Returns 0 if given 0.
      */
-    function log2(uint256 value, Rounding rounding) internal pure returns (uint256) {
+    function log2(
+        uint256 value,
+        Rounding rounding
+    ) internal pure returns (uint256) {
         unchecked {
             uint256 result = log2(value);
-            return result + (rounding == Rounding.Up && 1 << result < value ? 1 : 0);
+            return
+                result +
+                (rounding == Rounding.Up && 1 << result < value ? 1 : 0);
         }
     }
 
@@ -2223,10 +2772,15 @@ library Math {
      * @dev Return the log in base 10, following the selected rounding direction, of a positive value.
      * Returns 0 if given 0.
      */
-    function log10(uint256 value, Rounding rounding) internal pure returns (uint256) {
+    function log10(
+        uint256 value,
+        Rounding rounding
+    ) internal pure returns (uint256) {
         unchecked {
             uint256 result = log10(value);
-            return result + (rounding == Rounding.Up && 10 ** result < value ? 1 : 0);
+            return
+                result +
+                (rounding == Rounding.Up && 10 ** result < value ? 1 : 0);
         }
     }
 
@@ -2266,14 +2820,18 @@ library Math {
      * @dev Return the log in base 256, following the selected rounding direction, of a positive value.
      * Returns 0 if given 0.
      */
-    function log256(uint256 value, Rounding rounding) internal pure returns (uint256) {
+    function log256(
+        uint256 value,
+        Rounding rounding
+    ) internal pure returns (uint256) {
         unchecked {
             uint256 result = log256(value);
-            return result + (rounding == Rounding.Up && 1 << (result << 3) < value ? 1 : 0);
+            return
+                result +
+                (rounding == Rounding.Up && 1 << (result << 3) < value ? 1 : 0);
         }
     }
 }
-
 
 // File @openzeppelin/contracts/utils/math/SignedMath.sol@v4.9.6
 
@@ -2321,14 +2879,12 @@ library SignedMath {
     }
 }
 
-
 // File @openzeppelin/contracts/utils/Strings.sol@v4.9.6
 
 // Original license: SPDX_License_Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.9.0) (utils/Strings.sol)
 
 pragma solidity ^0.8.0;
-
 
 /**
  * @dev String operations.
@@ -2366,7 +2922,13 @@ library Strings {
      * @dev Converts a `int256` to its ASCII `string` decimal representation.
      */
     function toString(int256 value) internal pure returns (string memory) {
-        return string(abi.encodePacked(value < 0 ? "-" : "", toString(SignedMath.abs(value))));
+        return
+            string(
+                abi.encodePacked(
+                    value < 0 ? "-" : "",
+                    toString(SignedMath.abs(value))
+                )
+            );
     }
 
     /**
@@ -2381,7 +2943,10 @@ library Strings {
     /**
      * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation with fixed length.
      */
-    function toHexString(uint256 value, uint256 length) internal pure returns (string memory) {
+    function toHexString(
+        uint256 value,
+        uint256 length
+    ) internal pure returns (string memory) {
         bytes memory buffer = new bytes(2 * length + 2);
         buffer[0] = "0";
         buffer[1] = "x";
@@ -2403,11 +2968,13 @@ library Strings {
     /**
      * @dev Returns true if the two strings are equal.
      */
-    function equal(string memory a, string memory b) internal pure returns (bool) {
+    function equal(
+        string memory a,
+        string memory b
+    ) internal pure returns (bool) {
         return keccak256(bytes(a)) == keccak256(bytes(b));
     }
 }
-
 
 // File @openzeppelin/contracts/token/ERC721/ERC721.sol@v4.9.6
 
@@ -2415,12 +2982,6 @@ library Strings {
 // OpenZeppelin Contracts (last updated v4.9.0) (token/ERC721/ERC721.sol)
 
 pragma solidity ^0.8.0;
-
-
-
-
-
-
 
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
@@ -2460,7 +3021,9 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC165, IERC165) returns (bool) {
         return
             interfaceId == type(IERC721).interfaceId ||
             interfaceId == type(IERC721Metadata).interfaceId ||
@@ -2470,15 +3033,22 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-balanceOf}.
      */
-    function balanceOf(address owner) public view virtual override returns (uint256) {
-        require(owner != address(0), "ERC721: address zero is not a valid owner");
+    function balanceOf(
+        address owner
+    ) public view virtual override returns (uint256) {
+        require(
+            owner != address(0),
+            "ERC721: address zero is not a valid owner"
+        );
         return _balances[owner];
     }
 
     /**
      * @dev See {IERC721-ownerOf}.
      */
-    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
+    function ownerOf(
+        uint256 tokenId
+    ) public view virtual override returns (address) {
         address owner = _ownerOf(tokenId);
         require(owner != address(0), "ERC721: invalid token ID");
         return owner;
@@ -2501,11 +3071,16 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+    function tokenURI(
+        uint256 tokenId
+    ) public view virtual override returns (string memory) {
         _requireMinted(tokenId);
 
         string memory baseURI = _baseURI();
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : "";
+        return
+            bytes(baseURI).length > 0
+                ? string(abi.encodePacked(baseURI, tokenId.toString()))
+                : "";
     }
 
     /**
@@ -2535,7 +3110,9 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-getApproved}.
      */
-    function getApproved(uint256 tokenId) public view virtual override returns (address) {
+    function getApproved(
+        uint256 tokenId
+    ) public view virtual override returns (address) {
         _requireMinted(tokenId);
 
         return _tokenApprovals[tokenId];
@@ -2544,23 +3121,36 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-setApprovalForAll}.
      */
-    function setApprovalForAll(address operator, bool approved) public virtual override {
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    ) public virtual override {
         _setApprovalForAll(_msgSender(), operator, approved);
     }
 
     /**
      * @dev See {IERC721-isApprovedForAll}.
      */
-    function isApprovedForAll(address owner, address operator) public view virtual override returns (bool) {
+    function isApprovedForAll(
+        address owner,
+        address operator
+    ) public view virtual override returns (bool) {
         return _operatorApprovals[owner][operator];
     }
 
     /**
      * @dev See {IERC721-transferFrom}.
      */
-    function transferFrom(address from, address to, uint256 tokenId) public virtual override {
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public virtual override {
         //solhint-disable-next-line max-line-length
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner or approved");
+        require(
+            _isApprovedOrOwner(_msgSender(), tokenId),
+            "ERC721: caller is not token owner or approved"
+        );
 
         _transfer(from, to, tokenId);
     }
@@ -2568,15 +3158,27 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public virtual override {
         safeTransferFrom(from, to, tokenId, "");
     }
 
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override {
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner or approved");
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    ) public virtual override {
+        require(
+            _isApprovedOrOwner(_msgSender(), tokenId),
+            "ERC721: caller is not token owner or approved"
+        );
         _safeTransfer(from, to, tokenId, data);
     }
 
@@ -2598,9 +3200,17 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      *
      * Emits a {Transfer} event.
      */
-    function _safeTransfer(address from, address to, uint256 tokenId, bytes memory data) internal virtual {
+    function _safeTransfer(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    ) internal virtual {
         _transfer(from, to, tokenId);
-        require(_checkOnERC721Received(from, to, tokenId, data), "ERC721: transfer to non ERC721Receiver implementer");
+        require(
+            _checkOnERC721Received(from, to, tokenId, data),
+            "ERC721: transfer to non ERC721Receiver implementer"
+        );
     }
 
     /**
@@ -2629,9 +3239,14 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      *
      * - `tokenId` must exist.
      */
-    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) {
+    function _isApprovedOrOwner(
+        address spender,
+        uint256 tokenId
+    ) internal view virtual returns (bool) {
         address owner = ERC721.ownerOf(tokenId);
-        return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender);
+        return (spender == owner ||
+            isApprovedForAll(owner, spender) ||
+            getApproved(tokenId) == spender);
     }
 
     /**
@@ -2652,7 +3267,11 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      * @dev Same as {xref-ERC721-_safeMint-address-uint256-}[`_safeMint`], with an additional `data` parameter which is
      * forwarded in {IERC721Receiver-onERC721Received} to contract recipients.
      */
-    function _safeMint(address to, uint256 tokenId, bytes memory data) internal virtual {
+    function _safeMint(
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    ) internal virtual {
         _mint(to, tokenId);
         require(
             _checkOnERC721Received(address(0), to, tokenId, data),
@@ -2741,14 +3360,24 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      *
      * Emits a {Transfer} event.
      */
-    function _transfer(address from, address to, uint256 tokenId) internal virtual {
-        require(ERC721.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
+    function _transfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal virtual {
+        require(
+            ERC721.ownerOf(tokenId) == from,
+            "ERC721: transfer from incorrect owner"
+        );
         require(to != address(0), "ERC721: transfer to the zero address");
 
         _beforeTokenTransfer(from, to, tokenId, 1);
 
         // Check that tokenId was not transferred by `_beforeTokenTransfer` hook
-        require(ERC721.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
+        require(
+            ERC721.ownerOf(tokenId) == from,
+            "ERC721: transfer from incorrect owner"
+        );
 
         // Clear approvals from the previous owner
         delete _tokenApprovals[tokenId];
@@ -2784,7 +3413,11 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      *
      * Emits an {ApprovalForAll} event.
      */
-    function _setApprovalForAll(address owner, address operator, bool approved) internal virtual {
+    function _setApprovalForAll(
+        address owner,
+        address operator,
+        bool approved
+    ) internal virtual {
         require(owner != operator, "ERC721: approve to caller");
         _operatorApprovals[owner][operator] = approved;
         emit ApprovalForAll(owner, operator, approved);
@@ -2813,12 +3446,21 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         uint256 tokenId,
         bytes memory data
     ) private returns (bool) {
-        if (Address.isContract(to)) {
-            try IERC721Receiver(to).onERC721Received(_msgSender(), from, tokenId, data) returns (bytes4 retval) {
+        if (to.isContract()) {
+            try
+                IERC721Receiver(to).onERC721Received(
+                    _msgSender(),
+                    from,
+                    tokenId,
+                    data
+                )
+            returns (bytes4 retval) {
                 return retval == IERC721Receiver.onERC721Received.selector;
             } catch (bytes memory reason) {
                 if (reason.length == 0) {
-                    revert("ERC721: transfer to non ERC721Receiver implementer");
+                    revert(
+                        "ERC721: transfer to non ERC721Receiver implementer"
+                    );
                 } else {
                     /// @solidity memory-safe-assembly
                     assembly {
@@ -2845,7 +3487,12 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal virtual {}
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 firstTokenId,
+        uint256 batchSize
+    ) internal virtual {}
 
     /**
      * @dev Hook that is called after any token transfer. This includes minting and burning. If {ERC721Consecutive} is
@@ -2861,7 +3508,12 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal virtual {}
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 firstTokenId,
+        uint256 batchSize
+    ) internal virtual {}
 
     /**
      * @dev Unsafe write access to the balances, used by extensions that "mint" tokens using an {ownerOf} override.
@@ -2871,37 +3523,70 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      * that `ownerOf(tokenId)` is `a`.
      */
     // solhint-disable-next-line func-name-mixedcase
-    function __unsafe_increaseBalance(address account, uint256 amount) internal {
+    function __unsafe_increaseBalance(
+        address account,
+        uint256 amount
+    ) internal {
         _balances[account] += amount;
     }
 }
 
-
-// File @layerzerolabs/solidity-examples/contracts/token/onft/ONFT721.sol@v0.0.13
+// File @layerzerolabs/solidity-examples/contracts/token/onft721/ONFT721.sol@v1.1.0
 
 // Original license: SPDX_License_Identifier: MIT
 
 pragma solidity ^0.8.0;
 
-
-
 // NOTE: this ONFT contract has no public minting logic.
 // must implement your own minting logic in child classes
 contract ONFT721 is ONFT721Core, ERC721, IONFT721 {
-    constructor(string memory _name, string memory _symbol, uint256 _minGasToTransfer, address _lzEndpoint) ERC721(_name, _symbol) ONFT721Core(_minGasToTransfer, _lzEndpoint) {}
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        uint _minGasToTransfer,
+        address _lzEndpoint
+    ) ERC721(_name, _symbol) ONFT721Core(_minGasToTransfer, _lzEndpoint) {}
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ONFT721Core, ERC721, IERC165) returns (bool) {
-        return interfaceId == type(IONFT721).interfaceId || super.supportsInterface(interfaceId);
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        virtual
+        override(ONFT721Core, ERC721, IERC165)
+        returns (bool)
+    {
+        return
+            interfaceId == type(IONFT721).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
-    function _debitFrom(address _from, uint16, bytes memory, uint _tokenId) internal virtual override {
-        require(_isApprovedOrOwner(_msgSender(), _tokenId), "ONFT721: send caller is not owner nor approved");
-        require(ERC721.ownerOf(_tokenId) == _from, "ONFT721: send from incorrect owner");
+    function _debitFrom(
+        address _from,
+        uint16,
+        bytes memory,
+        uint _tokenId
+    ) internal virtual override {
+        require(
+            _isApprovedOrOwner(_msgSender(), _tokenId),
+            "ONFT721: send caller is not owner nor approved"
+        );
+        require(
+            ERC721.ownerOf(_tokenId) == _from,
+            "ONFT721: send from incorrect owner"
+        );
         _transfer(_from, address(this), _tokenId);
     }
 
-    function _creditTo(uint16, address _toAddress, uint _tokenId) internal virtual override {
-        require(!_exists(_tokenId) || (_exists(_tokenId) && ERC721.ownerOf(_tokenId) == address(this)));
+    function _creditTo(
+        uint16,
+        address _toAddress,
+        uint _tokenId
+    ) internal virtual override {
+        require(
+            !_exists(_tokenId) ||
+                (_exists(_tokenId) && ERC721.ownerOf(_tokenId) == address(this))
+        );
         if (!_exists(_tokenId)) {
             _safeMint(_toAddress, _tokenId);
         } else {
@@ -2910,12 +3595,9 @@ contract ONFT721 is ONFT721Core, ERC721, IONFT721 {
     }
 }
 
+// File contracts/BasicAccessControl.sol
 
-// File contracts/shared/BasicAccessControl.sol
-
-// Original license: SPDX_License_Identifier: UNLICENSED
-
-pragma solidity >=0.8.2;
+pragma solidity >=0.8.0;
 
 contract BasicAccessControl is Ownable {
     uint16 public totalModerators = 0;
@@ -2923,10 +3605,7 @@ contract BasicAccessControl is Ownable {
     bool public isMaintaining = true;
 
     modifier onlyModerators() {
-        require(
-            _msgSender() == owner() || moderators[_msgSender()] == true,
-            "Restricted Access!"
-        );
+        require(_msgSender() == owner() || moderators[_msgSender()] == true);
         _;
     }
 
@@ -2950,58 +3629,16 @@ contract BasicAccessControl is Ownable {
     }
 }
 
+// File contracts/Blockchain_Superheroes_ONFT.sol
 
-// File contracts/shared/Freezable.sol
-
-pragma solidity ^0.8.0;
-
-//import "@openzeppelin/contracts/utils/Context.sol";
-
-/*
- ** usage:
- **   require(!isFrozen(_account), "Freezable: frozen");
- ** or
- **   modifier: whenAccountNotFrozen(address _account)
- ** or
- **   require(!freezes[_from], "From account is locked.");
- */
-abstract contract Freezable {
-    event Frozen(address account);
-    event Unfrozen(address account);
-    mapping(address => bool) internal freezes;
-
-    function isFrozen(address _account) public view virtual returns (bool) {
-        return freezes[_account];
-    }
-
-    modifier whenAccountNotFrozen(address _account) {
-        require(!isFrozen(_account), "Freezable: frozen");
-        _;
-    }
-
-    modifier whenAccountFrozen(address _account) {
-        require(isFrozen(_account), "Freezable: not frozen");
-        _;
-    }
-}
-
-
-// File contracts/SuperHeroes/SuperHerosWithMint.sol
-
-// Original license: SPDX_License_Identifier: UNLICENSED
 pragma solidity >=0.8.0;
 
-
-
-
-contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
+contract Blockchain_Superheroes_PEN is ONFT721, BasicAccessControl {
     event MetadataUpdate(uint256 _tokenId);
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 
-    uint256 constant START_TOKEN = 728_126_428_000_000_000_001;
-    uint256 _maxCap = 728_126_428_000_000_002_500;
-
-    bool public isTransferable = false;
+    uint256 constant START_TOKEN = 555555000000001;
+    uint256 _maxCap = 5555559999999999999;
 
     // create mapping for mainting eth deposits
     mapping(uint256 => uint256) public tokenDeposits;
@@ -3016,7 +3653,8 @@ contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
 
     receive() external payable {}
 
-    string public _baseTokenURI = "https://api.bcsh.xyz/metadata/";
+    string public _baseTokenURI =
+        "https://api.staging.pentagon_games.io/metadata/bcsh/";
 
     constructor(
         string memory _name,
@@ -3024,10 +3662,6 @@ contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
         uint256 _minGasToTransfer,
         address _lzEndpoint
     ) ONFT721(_name, _symbol, _minGasToTransfer, _lzEndpoint) {}
-
-    function _baseURI() internal view virtual override returns (string memory) {
-        return _baseTokenURI;
-    }
 
     function setBaseURI(string memory baseURI) public onlyOwner {
         _baseTokenURI = baseURI;
@@ -3072,35 +3706,6 @@ contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
         totalTokenDeposit += msg.value;
     }
 
-    function toggleIsTransferable() public onlyOwner {
-        isTransferable = !isTransferable;
-    }
-
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount,
-        uint256 batchSize
-    ) internal virtual override {
-        require(
-            moderators[_msgSender()] || isTransferable,
-            "Cannot transfer to the provided address"
-        );
-        require(!isFrozen(from), "ERC20Freezable: from account is frozen");
-        require(!isFrozen(to), "ERC20Freezable: to account is frozen");
-        super._beforeTokenTransfer(from, to, amount, batchSize);
-    }
-
-    function _freeze(address _account) public onlyOwner {
-        freezes[_account] = true;
-        emit Frozen(_account);
-    }
-
-    function _unfreeze(address _account) public onlyOwner {
-        freezes[_account] = false;
-        emit Unfrozen(_account);
-    }
-
     // function to withdraw eth from token deposits
     function withdrawTokenDeposit(uint256 _tokenId, uint256 _amount) external {
         require(
@@ -3115,10 +3720,6 @@ contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
 
     // function to withdraw all token from contract of contract
     function withdrawAll() external onlyOwner {
-        require(
-            address(this).balance > totalTokenDeposit,
-            "No deposite from contract owner"
-        );
         payable(msg.sender).transfer(address(this).balance - totalTokenDeposit);
     }
 

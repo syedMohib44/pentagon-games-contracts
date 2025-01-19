@@ -1691,7 +1691,7 @@ contract BasicAccessControl is Ownable {
 
 // File contracts/PentaPets/PentaPets.sol
 
-contract PentaPets is ERC721, BasicAccessControl {
+contract PentaPets is ReentrancyGuard, ERC721, BasicAccessControl {
     event MetadataUpdate(uint256 _tokenId);
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 
@@ -1733,7 +1733,7 @@ contract PentaPets is ERC721, BasicAccessControl {
         address _owner,
         uint256 _classId,
         uint256 _tokenId
-    ) external onlyModerators ReentrancyGuard returns (bool) {
+    ) external onlyModerators nonReentrant returns (bool) {
         return mint(_owner, _classId, _tokenId);
     }
 
