@@ -6,12 +6,11 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
 import {Freezable} from "../shared/Freezable.sol";
 
-contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
+contract Blockchain_Supervillains is ONFT721, Freezable, BasicAccessControl {
     event MetadataUpdate(uint256 _tokenId);
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 
-    address public constant BURN_ADDRESS =
-        0x000000000000000000000000000000000000dEaD;
+    address public burnAddress = address(this);
     uint256 constant START_TOKEN = 728_126_428_000_000_000_001;
     uint256 _maxCap = 728_126_428_000_000_002_500;
 
@@ -89,12 +88,12 @@ contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
         totalTokenDeposit += msg.value;
     }
 
-    function SunkenPower(uint256 tokenId) external payable {
+    function SunkenPower(uint256 _tokenId) external payable {
         require(
             ownerOf(_tokenId) == msg.sender,
             "You are not the owner of this token"
         );
-        (bool success, ) = BURN_ADDRESS.call{value: msg.value}("");
+        (bool success, ) = burnAddress.call{value: msg.value}("");
         require(success, "Failed to burn ETH");
 
         tokenBurns[_tokenId] += msg.value;
@@ -139,6 +138,14 @@ contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
         tokenDeposits[_tokenId] -= _amount;
         totalTokenDeposit -= _amount;
         payable(msg.sender).transfer(_amount);
+    }
+
+    function updateBurnAddress(address _burnAddress) external onlyOwner {
+        require(
+            address(this).balance > totalTokenDeposit,
+            "No deposite from contract owner"
+        );
+        burnAddress = _burnAddress;
     }
 
     // function to withdraw all token from contract of contract

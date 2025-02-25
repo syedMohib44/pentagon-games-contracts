@@ -65,7 +65,7 @@ contract RewardSystem {
                 keccak256(
                     abi.encodePacked(
                         block.timestamp,
-                        block.difficulty,
+                        block.prevrandao,
                         msg.sender
                     )
                 )

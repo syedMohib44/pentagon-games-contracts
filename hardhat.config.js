@@ -117,7 +117,7 @@ module.exports = {
         network: "pentestnet",
         chainId: 555555,
         urls: {
-          apiURL: "https://api.explorer-testnet.pentagon.zeeve.online/api",
+          apiURL: "https://explorer-testnet.pentagon.games/api",
           browserURL: "https://explorer-testnet.pentagon.games/"
         }
       },
