@@ -10,13 +10,17 @@ contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
     event MetadataUpdate(uint256 _tokenId);
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 
-    uint256 constant START_TOKEN = 728_126_428_000_000_000_001;
-    uint256 _maxCap = 728_126_428_000_000_002_500;
+    address public burnAddress = address(this);
+    uint256 constant START_TOKEN = 3_344_000_000_001;
+    uint256 _maxCap = 3_344_000_002_500;
 
     bool public isTransferable = false;
 
-    // create mapping for mainting eth deposits
+    // create mapping for mainting gas deposits
     mapping(uint256 => uint256) public tokenDeposits;
+
+    // create mapping for mainting gas burns
+    mapping(uint256 => uint256) public tokenBurns;
 
     mapping(uint256 => uint256) public tokenHighFiversCount;
     mapping(uint256 => address[]) public tokenHighFivers;
@@ -84,6 +88,17 @@ contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
         totalTokenDeposit += msg.value;
     }
 
+    function SunkenPower(uint256 _tokenId) external payable {
+        require(
+            ownerOf(_tokenId) == msg.sender,
+            "You are not the owner of this token"
+        );
+        (bool success, ) = burnAddress.call{value: msg.value}("");
+        require(success, "Failed to burn ETH");
+
+        tokenBurns[_tokenId] += msg.value;
+    }
+
     function toggleIsTransferable() public onlyOwner {
         isTransferable = !isTransferable;
     }
@@ -123,6 +138,14 @@ contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
         tokenDeposits[_tokenId] -= _amount;
         totalTokenDeposit -= _amount;
         payable(msg.sender).transfer(_amount);
+    }
+
+    function updateBurnAddress(address _burnAddress) external onlyOwner {
+        require(
+            address(this).balance > totalTokenDeposit,
+            "No deposite from contract owner"
+        );
+        burnAddress = _burnAddress;
     }
 
     // function to withdraw all token from contract of contract

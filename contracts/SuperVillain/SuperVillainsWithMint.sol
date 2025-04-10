@@ -11,8 +11,8 @@ contract Blockchain_Supervillains is ONFT721, Freezable, BasicAccessControl {
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 
     address public burnAddress = address(this);
-    uint256 constant START_TOKEN = 728_126_428_000_000_000_001;
-    uint256 _maxCap = 728_126_428_000_000_002_500;
+    uint256 constant START_TOKEN = 37_084_624_000_000_001;
+    uint256 _maxCap = 37_084_624_000_002_500;
 
     bool public isTransferable = false;
 

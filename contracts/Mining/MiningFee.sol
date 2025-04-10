@@ -30,7 +30,7 @@ contract MiningFee is BasicAccessControl {
         uint256 resetTimeExpirey = userFee.updatedAt + resetTime;
 
         require(
-            currentTime < resetTimeExpirey ||
+            currentTime > resetTimeExpirey ||
                 userFee.status == FEE_STATUS.NO_FEE ||
                 userFee.status == FEE_STATUS.NONE,
             "User already paid the fee"
@@ -52,7 +52,7 @@ contract MiningFee is BasicAccessControl {
         uint256 resetTimeExpirey = userFee.updatedAt + resetTime;
 
         require(
-            currentTime < resetTimeExpirey ||
+            currentTime > resetTimeExpirey ||
                 userFeeStatus[msg.sender].status == FEE_STATUS.NONE,
             "User already paid the fee"
         );

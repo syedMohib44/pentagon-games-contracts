@@ -44,16 +44,16 @@ const jsonData = XLSX.utils.sheet_to_json(worksheet);
 const run = async () => {
   const nameEth = [
 
-    "Jujumbo"
+    "Dilloom"
   ];//Object.values(result)[col['Name_eth']];
   const classId = [
-    1244
+    1
   ];//Object.values(result)[0];
   const totalSupply = [
 
-    1500
+    7500
   ];//Object.values(result)[16];
-  for (let i = 0; i < nameEth.length; i++) {
+  for (let i = 0; i < 1; i++) {
 
     if (typeof (nameEth[i]) == "string" && nameEth[i]) {
       const ticker = `c${nameEth[i].toUpperCase()}`;

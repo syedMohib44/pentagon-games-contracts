@@ -14,8 +14,8 @@ contract BCSV_Distributor is BasicAccessControl {
         blockchainSuperheroes = _blockchainSuperheroes;
     }
 
-    uint256 public mintingCount = 728_126_428_000_000_000_000;
-    uint256 public mintingCap = 728_126_428_000_000_002_500; //  end token id
+    uint256 public mintingCount = 37_084_624_000_000_000;
+    uint256 public mintingCap = 37_084_624_000_002_500; //  end token id
 
     uint256 public tokenPrice = 888 * (10 ** 18);
 

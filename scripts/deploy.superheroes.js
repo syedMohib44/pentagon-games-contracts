@@ -53,6 +53,7 @@ async function main() {
   await hre.run("verify:verify", {
     address: this.BCSH_Distributor.target,
     constructorArguments: [this.bcshContract.target],
+    contract: `contracts/SuperHeroes/BCSH_Distributor.sol:BCSH_Distributor`
   });
 
 }

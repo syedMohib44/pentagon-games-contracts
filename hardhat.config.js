@@ -43,6 +43,13 @@ module.exports = {
       gasPrice: 8000000000, // Adjust as necessary
       timeout: 1000000 // Adjust the timeout as needed
     },
+    penmainnet: {
+      url: `https://rpc.pentagon.games`,
+      accounts: [PRIVATE_KEY],
+      gas: 2100000,
+      gasPrice: 8000000000, // Adjust as necessary
+      timeout: 1000000 // Adjust the timeout as needed
+    },
     chainverse: {
       url: `https://rpc.chainverse.info/`,
       accounts: [PRIVATE_KEY],
@@ -57,6 +64,10 @@ module.exports = {
     },
     arbitrumOne: {
       url: 'https://arb1.arbitrum.io/rpc',
+      accounts: [PRIVATE_KEY]
+    },
+    nebula: {
+      url: 'https://testnet.skalenodes.com/v1/lanky-ill-funny-testnet',
       accounts: [PRIVATE_KEY]
     },
     polygonamoy: {
@@ -78,7 +89,9 @@ module.exports = {
       bsc: process.env.BNB_API_KEY,
       xai: process.env.XAI_API_KEY,
       pentestnet: 'pentestnet',
-      avalanche: 'avalanche'
+      penmainnet: 'penmainnet',
+      avalanche: 'avalanche',
+      nebula: 'nebula'
     },
     customChains: [
       {
@@ -87,6 +100,14 @@ module.exports = {
         urls: {
           apiURL: "https://api.test.btcs.network/api",
           browserURL: "https://scan.test.btcs.network"
+        }
+      },
+      {
+        network: "nebula",
+        chainId: 37084624,
+        urls: {
+          apiURL: "https://internal.explorer.testnet.skalenodes.com:10001/api/",
+          browserURL: "https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/"
         }
       },
       {
@@ -113,6 +134,14 @@ module.exports = {
       //     browserURL: "https://bscscan.com/"
       //   }
       // },
+      {
+        network: "penmainnet",
+        chainId: 3344,
+        urls: {
+          apiURL: "https://explorer.pentagon.games/api",
+          browserURL: "https://explorer.pentagon.games/"
+        }
+      },
       {
         network: "pentestnet",
         chainId: 555555,
