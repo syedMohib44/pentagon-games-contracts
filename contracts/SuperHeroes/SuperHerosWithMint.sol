@@ -11,8 +11,8 @@ contract Blockchain_Superheroes is ONFT721, Freezable, BasicAccessControl {
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 
     address public burnAddress = address(this);
-    uint256 constant START_TOKEN = 3_344_000_000_001;
-    uint256 _maxCap = 3_344_000_002_500;
+    uint256 constant START_TOKEN = 5555_00_000_0001;
+    uint256 _maxCap = 5555_00_000_2500;
 
     bool public isTransferable = false;
 

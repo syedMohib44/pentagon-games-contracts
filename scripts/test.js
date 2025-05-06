@@ -3,7 +3,7 @@ const fs = require('fs');
 const FormData = require('form-data');
 
 const API_URL = "https://api.venice.ai/api/v1/image/generate";
-const API_KEY = ""; // Replace with your actual API key
+const API_KEY = "3EEoc4Iz3XMOI0pt63PGY_xNhtyv0ksMjYVddQWWBm"; // Replace with your actual API key
 
 
 

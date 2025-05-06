@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract BasicAccessControl is Ownable {
     uint16 public totalModerators = 0;
     mapping(address => bool) public moderators;
-    bool public isMaintaining = true;
+    bool public isMaintaining = false;
 
     modifier onlyModerators() {
         require(
@@ -22,7 +22,7 @@ contract BasicAccessControl is Ownable {
         _;
     }
 
-    function AddModerator(address _newModerator) public onlyOwner {
+    function addModerator(address _newModerator) public onlyOwner {
         if (moderators[_newModerator] == false) {
             moderators[_newModerator] = true;
             totalModerators += 1;
@@ -32,7 +32,7 @@ contract BasicAccessControl is Ownable {
         }
     }
 
-    function UpdateMaintaining(bool _isMaintaining) public onlyOwner {
+    function updateMaintaining(bool _isMaintaining) public onlyOwner {
         isMaintaining = _isMaintaining;
     }
 }

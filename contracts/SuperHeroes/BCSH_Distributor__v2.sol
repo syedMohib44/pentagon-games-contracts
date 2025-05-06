@@ -6,7 +6,7 @@ import {IBlockchain_Superheroes} from "../interfaces/IBlockchain_Superheroes.sol
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Blockchain_Superheroes_Distributor_V2 is BasicAccessControl {
+contract BCSH_Distributor__v2 is BasicAccessControl {
     using SafeERC20 for IERC20;
     event Mint(address _owner, uint256 token);
 

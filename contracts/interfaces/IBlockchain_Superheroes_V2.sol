@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-interface IBlockchain_Superheroes {
-    function mintNextToken(
-        address _owner,
-        uint256 _tokenId
-    ) external returns (bool);
+interface IBlockchain_Superheroes_V2 {
+    function mintNextToken(address _owner) external returns (bool);
 
     function currentToken() external view returns (uint256);
 

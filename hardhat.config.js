@@ -10,7 +10,6 @@ module.exports = {
       {
         version: "0.8.22",
         settings: {
-
           optimizer: {
             enabled: true,
             runs: 200,
@@ -20,12 +19,19 @@ module.exports = {
     ],
   },
   networks: {
+    hardhat: {
+      allowUnlimitedContractSize: true
+    },
     eth: {
       url: 'https://mainnet.infura.io/v3/2142eded1e254fe08c4b37b74f1ccc41',
       accounts: [PRIVATE_KEY]
     },
     coretestnet: {
       url: `https://rpc.test.btcs.network`,
+      accounts: [PRIVATE_KEY]
+    },
+    core: {
+      url: `https://rpc.coredao.org`,
       accounts: [PRIVATE_KEY]
     },
     xai: {
@@ -83,6 +89,7 @@ module.exports = {
     apiKey: {
       mainnet: process.env.ETH_API_KEY,
       coretestnet: process.env.CORE_TESTNET_API_KEY,
+      core: process.env.CORE_API_KEY,
       polygonamoy: process.env.AMOY_API_KEY,
       arbitrumOne: process.env.ARB_API_KEY,
       polygon: process.env.AMOY_API_KEY,
@@ -100,6 +107,14 @@ module.exports = {
         urls: {
           apiURL: "https://api.test.btcs.network/api",
           browserURL: "https://scan.test.btcs.network"
+        }
+      },
+      {
+        network: "core",
+        chainId: 1116,
+        urls: {
+          apiURL: "https://openapi.coredao.org//api/",
+          browserURL: "https://scan.coredao.org/"
         }
       },
       {
