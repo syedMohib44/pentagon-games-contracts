@@ -8,63 +8,40 @@ import "../shared/BasicAccessControl.sol";
 contract KhaosReward is BasicAccessControl {
     using SafeERC20 for IERC20;
 
-    enum REWARDS {
-        NONE,
-        STARS,
-        COINS,
-        KARROTS,
-        xKHAOS,
-        USDT
-    }
-
-    event RewardEarned(
-        REWARDS rewardType,
-        address to,
-        uint256 amount,
-        uint256 createdAt
+    event RewardEarned(address to, uint256 createdAt);
+    event AirdropTransfer(
+        address token,
+        address[] indexed addresses,
+        uint256[] indexed values
     );
 
-    IERC20 public xKhaos;
-    IERC20 public usdt;
+    fallback() external payable {}
 
-    constructor(IERC20 _xKhaos, IERC20 _usdt) {
-        xKhaos = _xKhaos;
-        usdt = _usdt;
-    }
+    receive() external payable {}
 
     function claimReward(
-        REWARDS _rewardType,
-        address _to,
-        uint256 _amount,
         uint256 _createdAt
-    )
-        external
-        onlyModerators
-        isActive
-        returns (REWARDS rewardType, address user, uint256 amount)
-    {
-        if (_rewardType == REWARDS.USDT) {
-            bool success = IERC20(usdt).transfer(_to, _amount);
-            require(success == true, "failed transfer");
-        } else if (_rewardType == REWARDS.xKHAOS) {
-            bool success = IERC20(xKhaos).transfer(_to, _amount);
-            require(success == true, "failed transfer");
+    ) external isActive returns (address user, uint256 createdAt) {
+        emit RewardEarned(msg.sender, _createdAt);
+        return (msg.sender, _createdAt);
+    }
+
+    function bulkTransfer(
+        address _tokenAddress,
+        address[] memory addresses,
+        uint256[] memory values
+    ) external onlyModerators {
+        require(_tokenAddress != address(0), "ERC20 address cannot be null");
+        require(addresses.length == values.length, "Length mismatch");
+
+        for (uint256 i = 0; i < addresses.length; i++) {
+            IERC20(_tokenAddress).transferFrom(
+                msg.sender,
+                addresses[i],
+                values[i]
+            );
         }
 
-        emit RewardEarned(_rewardType, _to, _amount, _createdAt);
-        return (_rewardType, _to, _amount); // Fallback (shouldn't happen with proper probabilities)
-    }
-
-    function setContracts(IERC20 _xKhaos, IERC20 _usdt) external onlyOwner {
-        xKhaos = _xKhaos;
-        usdt = _usdt;
-    }
-
-    function ownerWithdrawERC20(
-        IERC20 _token,
-        uint256 _amount
-    ) external onlyOwner {
-        bool success = IERC20(_token).transfer(msg.sender, _amount);
-        require(success == true, "failed transfer");
+        emit AirdropTransfer(_tokenAddress, addresses, values);
     }
 }

@@ -40,21 +40,6 @@ contract xKHAOS is ERC20("xKHAOS", "xKHAOS"), Freezable, BasicAccessControl {
         transferable[_transferable] = false;
     }
 
-    function spendBananas(address _to, uint256 _amount) external {
-        require(
-            _to == address(this) ||
-                moderators[_msgSender()] ||
-                transferable[_to],
-            "Cannot transfer to the provided address"
-        );
-        require(
-            !isFrozen(_msgSender()),
-            "ERC20Freezable: from account is frozen"
-        );
-        require(!isFrozen(_to), "ERC20Freezable: to account is frozen");
-        super.transfer(_to, _amount);
-    }
-
     function _beforeTokenTransfer(
         address from,
         address to,

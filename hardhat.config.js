@@ -68,14 +68,20 @@ module.exports = {
       gas: 21000000,
       gasPrice: 3000000000000, // Adjust as necessary
     },
+    nebula: {
+      url: `https://mainnet-proxy.skalenodes.com/v1/green-giddy-denebola`,
+      accounts: [PRIVATE_KEY],
+      gas: 21000000,
+      gasPrice: 3000000000000, // Adjust as necessary
+    },
     arbitrumOne: {
       url: 'https://arb1.arbitrum.io/rpc',
       accounts: [PRIVATE_KEY]
     },
-    nebula: {
-      url: 'https://testnet.skalenodes.com/v1/lanky-ill-funny-testnet',
-      accounts: [PRIVATE_KEY]
-    },
+    // nebula: {
+    //   url: 'https://testnet.skalenodes.com/v1/lanky-ill-funny-testnet',
+    //   accounts: [PRIVATE_KEY]
+    // },
     polygonamoy: {
       url: `https://rpc-amoy.polygon.technology`,
       accounts: [PRIVATE_KEY]
@@ -131,6 +137,14 @@ module.exports = {
         urls: {
           apiURL: "https://explorer.chainverse.info/:///api",
           browserURL: "https://explorer.chainverse.info/"
+        }
+      },
+      {
+        network: "nebula",
+        chainId: 1482601649,
+        urls:{
+          apiURL: "https://internal-hubs.explorer.mainnet.skalenodes.com:10011/api/",
+          browserURL: "https://green-giddy-denebola.explorer.mainnet.skalenodes.com/"
         }
       },
       {

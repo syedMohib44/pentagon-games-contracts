@@ -16,9 +16,9 @@ contract Blockchain_Superheroes_V2 is ONFT721, Freezable, BasicAccessControl {
     event WithdrawDeposit(uint256 _tokenId, uint256 _amount, address _owner);
 
     address public burnAddress = address(this);
-    uint256 constant START_TOKEN = 1_116_000_000_000;
+    uint256 constant START_TOKEN = 3_344_000_000_000;
     uint256 public currentToken = START_TOKEN;
-    uint256 public _maxCap = 1_116_000_002_500;
+    uint256 public _maxCap = 3_344_000_002_500;
 
     bool public isTransferable = false;
 
@@ -26,6 +26,7 @@ contract Blockchain_Superheroes_V2 is ONFT721, Freezable, BasicAccessControl {
     uint256 public updatedTimes = 0;
     bool public nativeDepositAllowed = true;
     bool public erc20DepositAllowed = true;
+    uint256 public nftPrice = 1 ether;
 
     // create mapping for mainting gas deposits
     mapping(uint256 => mapping(address => uint256)) public tokenDeposits;
@@ -69,13 +70,19 @@ contract Blockchain_Superheroes_V2 is ONFT721, Freezable, BasicAccessControl {
         _maxCap = _newCap;
     }
 
+    function setNFTPrice(uint256 _nftPrice) public onlyOwner {
+        nftPrice = _nftPrice;
+    }
+
     /**
      * Method to be called by transak
      */
     function mint(
         address _owner,
         uint256 _tokenId
-    ) external onlyModerators isActive returns (bool) {
+    ) external payable onlyModerators isActive returns (bool) {
+        require(msg.value == nftPrice, "Insufficient price provided");
+
         uint256 tokenId = currentToken + 1;
         require(
             _tokenId == tokenId,
@@ -84,11 +91,11 @@ contract Blockchain_Superheroes_V2 is ONFT721, Freezable, BasicAccessControl {
         require(_owner != address(0), "ERC721: mint to the zero address");
         require(!_exists(_tokenId), "ERC721: token already minted");
         require(
-            _tokenId >= START_TOKEN && _tokenId <= _maxCap,
+            tokenId >= START_TOKEN && tokenId <= _maxCap,
             "Token ID is out of range"
         );
-
-        _safeMint(_owner, _tokenId);
+        _safeMint(_owner, tokenId);
+        currentToken = tokenId;
 
         return true;
     }

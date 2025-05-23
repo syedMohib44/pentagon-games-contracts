@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "../shared/BasicAccessControl.sol";
 import "../shared/Freezable.sol";
-import "../interfaces/IEchoVault_Distributor.sol";
 
 // TODO: Create a factory contract with dynamic name and symbol
 contract EchoVault is ERC20, Freezable, BasicAccessControl {
@@ -19,7 +18,14 @@ contract EchoVault is ERC20, Freezable, BasicAccessControl {
     enum FriendRequest {
         NONE,
         REQUEST,
-        ACCEPT
+        FRIEND,
+        UNFRIEND
+    }
+
+    enum FollowRequest {
+        NONE,
+        FOLLOW,
+        UNFOLLOW
     }
 
     event Request(
@@ -29,8 +35,6 @@ contract EchoVault is ERC20, Freezable, BasicAccessControl {
         uint256 amount
     );
     event Follow(address friend, address owner, uint256 amount);
-
-    IEchoVault_Distributor public echoVaultDistributor;
 
     mapping(address => bool) public transferable;
     bool public isTransferable = false;
@@ -43,7 +47,9 @@ contract EchoVault is ERC20, Freezable, BasicAccessControl {
         0xB2e3e82a95f5c4c47E30A5b420Ac4f99d32EF61f;
 
     mapping(address => FriendRequest) public friendRequests;
+    mapping(address => FollowRequest) public followRequests;
 
+    mapping(address => bool) public blockList;
     mapping(address => bool) public isFriend;
     mapping(address => bool) public isFollower;
     mapping(address => bool) public isReferral;
@@ -65,57 +71,146 @@ contract EchoVault is ERC20, Freezable, BasicAccessControl {
     constructor(
         string memory _name,
         string memory _symbol,
-        address _echoVaultDistributor,
+        uint256 _fee,
         address _owner
-    ) ERC20(_name, _symbol) {
-        echoVaultDistributor = IEchoVault_Distributor(_echoVaultDistributor);
+    ) payable ERC20(_name, _symbol) {
         _mint(address(this), MAX_SUPPLY);
         _transfer(address(this), _owner, OWNER_SHARE); // send 80% to owner
-        _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
+        // _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
+
+        if (msg.value < _fee) {
+            _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
+        }
     }
 
-    function sendFriendRequest() external {
+    function requestFriend() external {
         require(
             msg.sender != address(0),
             "Cannot send friend request to null address"
         );
+        require(!blockList[msg.sender], "You are block by user");
+
         require(
-            friendRequests[msg.sender] == FriendRequest.NONE,
+            friendRequests[msg.sender] == FriendRequest.NONE ||
+                friendRequests[msg.sender] == FriendRequest.UNFRIEND,
             "Invalid request type"
         );
         require(msg.sender != owner(), "Cannot send friend request to ownself");
-        friendRequests[msg.sender] = FriendRequest.REQUEST;
-        emit Request(FriendRequest.REQUEST, msg.sender, owner(), 0);
+
+        if (friendRequests[msg.sender] == FriendRequest.UNFRIEND) {
+            friendRequests[msg.sender] = FriendRequest.UNFRIEND;
+        } else if (friendRequests[msg.sender] == FriendRequest.NONE) {
+            friendRequests[msg.sender] = FriendRequest.REQUEST;
+        }
+        emit Request(friendRequests[msg.sender], msg.sender, owner(), 0);
     }
 
     //TODO: unFriend and unFollow
 
-    function acceptFriendRequest(address _friend) external onlyOwner {
+    function acceptFriend(address _friend) external onlyOwner {
+        require(!blockList[_friend], "You have blocked the user");
+
         require(
-            friendRequests[_friend] == FriendRequest.REQUEST,
+            friendRequests[_friend] == FriendRequest.REQUEST ||
+                friendRequests[msg.sender] == FriendRequest.UNFRIEND,
             "Invalid request type"
         );
         require(!isFriend[_friend], "Already a friend");
         require(friendCount < FRIEND_MAX, "Friend cap reached");
 
         isFriend[_friend] = true;
-        friendCount++;
-        friendRequests[msg.sender] = FriendRequest.ACCEPT;
-        _transfer(address(this), _friend, FRIEND_AMOUNT);
-        // token.disperse(msg.sender, FRIEND_AMOUNT);
-        emit Request(FriendRequest.ACCEPT, msg.sender, owner(), FRIEND_AMOUNT);
+        friendRequests[msg.sender] = FriendRequest.FRIEND;
+        if (friendRequests[msg.sender] == FriendRequest.REQUEST) {
+            friendCount++;
+            _transfer(address(this), _friend, FRIEND_AMOUNT);
+            emit Request(
+                friendRequests[msg.sender],
+                _friend,
+                msg.sender,
+                FRIEND_AMOUNT
+            );
+        } else if (friendRequests[msg.sender] == FriendRequest.UNFRIEND) {
+            emit Request(friendRequests[msg.sender], _friend, msg.sender, 0);
+        }
     }
 
-    function addFollower() external {
+    function unFriend(address _friend) external onlyOwner {
+        require(!blockList[msg.sender], "You are block by user");
+
+        require(
+            friendRequests[_friend] == FriendRequest.FRIEND ||
+                friendRequests[_friend] == FriendRequest.REQUEST,
+            "Invalid request type"
+        );
+        require(isFriend[_friend], "Not a friend");
+
+        isFriend[_friend] = false;
+        friendRequests[msg.sender] = FriendRequest.UNFRIEND;
+        emit Request(FriendRequest.UNFRIEND, _friend, msg.sender, 0);
+    }
+
+    function blockUser(address _friend) external onlyOwner {
+        if (friendRequests[msg.sender] == FriendRequest.NONE) {
+            friendRequests[msg.sender] = FriendRequest.NONE;
+        } else {
+            friendRequests[msg.sender] = FriendRequest.UNFRIEND;
+        }
+
+        if (followRequests[msg.sender] == FollowRequest.NONE) {
+            followRequests[msg.sender] = FollowRequest.NONE;
+        } else {
+            followRequests[msg.sender] = FollowRequest.UNFOLLOW;
+        }
+
+        isFriend[_friend] = false;
+        blockList[msg.sender] = true;
+        isFollower[_friend] = false;
+        emit Request(friendRequests[msg.sender], _friend, msg.sender, 0);
+    }
+
+    function unBlockUser(address _friend) external onlyOwner {
+        blockList[msg.sender] = false;
+        emit Request(friendRequests[msg.sender], _friend, msg.sender, 0);
+    }
+
+    function followUser() external {
+        require(!blockList[msg.sender], "You are block by user");
+
+        require(
+            followRequests[msg.sender] == FollowRequest.NONE ||
+                followRequests[msg.sender] == FollowRequest.UNFOLLOW,
+            "Invalid request type"
+        );
+
         require(!isFollower[msg.sender], "Already a follower");
         require(msg.sender != owner(), "Cannot follow to ownself");
         require(followerCount < FOLLOWER_MAX, "Follower cap reached");
 
+        if (followRequests[msg.sender] == FollowRequest.NONE) {
+            followerCount++;
+            _transfer(address(this), msg.sender, FOLLOWER_AMOUNT);
+            emit Follow(msg.sender, owner(), FOLLOWER_AMOUNT);
+        } else if (followRequests[msg.sender] == FollowRequest.UNFOLLOW) {
+            emit Follow(msg.sender, owner(), 0);
+        }
         isFollower[msg.sender] = true;
-        followerCount++;
-        _transfer(address(this), msg.sender, FOLLOWER_AMOUNT);
+        followRequests[msg.sender] = FollowRequest.FOLLOW;
+    }
+
+    function unFollowUser() external {
+        require(!blockList[msg.sender], "You are block by user");
+
+        require(
+            followRequests[msg.sender] == FollowRequest.FOLLOW,
+            "Invalid request type"
+        );
+
+        require(isFollower[msg.sender], "Not a follower");
+        require(msg.sender != owner(), "Cannot unfollow to ownself");
+
+        isFollower[msg.sender] = false;
         // token.disperse(msg.sender, FOLLOWER_AMOUNT);
-        emit Follow(msg.sender, owner(), FOLLOWER_AMOUNT);
+        emit Follow(msg.sender, owner(), 0);
     }
 
     //TODO: Refere a Prof and if the Mob creates a token then give Prof 0.1% of the Mob token total would be 500 invites alltogeather 5%

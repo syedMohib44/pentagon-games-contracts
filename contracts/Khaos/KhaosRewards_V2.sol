@@ -157,4 +157,12 @@ contract KhaosRewards_V2 is BasicAccessControl {
                 )
             );
     }
+
+    function ownerWithdrawERC20(
+        IERC20 _token,
+        uint256 _amount
+    ) external onlyOwner {
+        bool success = IERC20(_token).transfer(msg.sender, _amount);
+        require(success == true, "failed transfer");
+    }
 }

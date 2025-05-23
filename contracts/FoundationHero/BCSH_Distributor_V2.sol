@@ -19,8 +19,8 @@ contract BCSH_Distributor_V2 is BasicAccessControl {
         erc20Token = IERC20(_erc20Token);
     }
 
-    uint256 public mintingCount = 1_116_000_000_000;
-    uint256 public mintingCap = 1_116_000_002_500;
+    uint256 public mintingCount = 3_344_000_000_000;
+    uint256 public mintingCap = 3_344_000_002_500;
 
     uint256 decimal = 18;
 
@@ -29,6 +29,10 @@ contract BCSH_Distributor_V2 is BasicAccessControl {
 
     bool public _mintingPausedNative = false;
     bool public _mintingPausedERC20 = true;
+
+    fallback() external payable {}
+
+    receive() external payable {}
 
     function setContracts(address _blockchainSuperheroes) external onlyOwner {
         blockchainSuperheroes = _blockchainSuperheroes;
@@ -75,16 +79,16 @@ contract BCSH_Distributor_V2 is BasicAccessControl {
         return true;
     }
 
-    fallback() external payable {}
-
-    receive() external payable {}
-
     function togglePauseNative() public onlyModerators {
         _mintingPausedNative = !_mintingPausedNative;
     }
 
     function togglePauseERC20() public onlyModerators {
         _mintingPausedERC20 = !_mintingPausedERC20;
+    }
+
+    function updateERC20Token(address _erc20Token) public onlyOwner {
+        erc20Token = IERC20(_erc20Token);
     }
 
     function updateNativePrice(uint256 _nativePriceNFT) public onlyOwner {
