@@ -127,6 +127,10 @@ contract BCSH_Hero_Receipt is
         emit Unfrozen(_account);
     }
 
+    function toggleIsTransferable() public onlyOwner {
+        isTransferable = !isTransferable;
+    }
+
     // function to withdraw all token from contract of contract
     function withdrawAll() external onlyOwner {
         payable(msg.sender).transfer(address(this).balance);
@@ -134,6 +138,9 @@ contract BCSH_Hero_Receipt is
 
     // function to withdraw all erc-20 token from contract of contract
     function withdrawAllERC20(IERC20 _token) external onlyOwner {
-        payable(msg.sender).transfer(_token.balanceOf(address(this)));
+        IERC20(_token).transfer(
+            msg.sender,
+            IERC20(_token).balanceOf(address(this))
+        );
     }
 }
