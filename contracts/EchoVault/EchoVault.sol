@@ -2,14 +2,21 @@
 
 pragma solidity >=0.8.2;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import "../shared/BasicAccessControl.sol";
+import "../shared/BasicUpgradeableAccessControl.sol";
 import "../shared/Freezable.sol";
 
-// TODO: Create a factory contract with dynamic name and symbol
-contract EchoVault is ERC20, Freezable, BasicAccessControl {
+contract EchoVault is
+    Initializable,
+    ERC20Upgradeable,
+    UUPSUpgradeable,
+    BasicUpgradeableAccessControl,
+    Freezable
+{
     /**
      * Events:
      * Friends
@@ -66,22 +73,46 @@ contract EchoVault is ERC20, Freezable, BasicAccessControl {
     uint256 public followerCount;
     uint256 public referralCount;
 
-    //TODO: Dev wallet is constant and if user pay more fee like 100 - 120 PC they don't have to pay 5%
+    // constructor(
+    //     string memory _name,
+    //     string memory _symbol,
+    //     uint256 _fee,
+    //     address _owner
+    // ) payable ERC20(_name, _symbol) {
+    //     _mint(address(this), MAX_SUPPLY);
+    //     _transfer(address(this), _owner, OWNER_SHARE); // send 80% to owner
+    //     // _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
 
-    constructor(
+    //     if (msg.value < _fee) {
+    //         _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
+    //     }
+    // }
+
+    constructor() {
+        _disableInitializers(); // Required for upgradeable contracts
+    }
+
+    function initialize(
         string memory _name,
         string memory _symbol,
-        uint256 _fee,
         address _owner
-    ) payable ERC20(_name, _symbol) {
-        _mint(address(this), MAX_SUPPLY);
-        _transfer(address(this), _owner, OWNER_SHARE); // send 80% to owner
-        // _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
+    ) public payable initializer {
+        __ERC20_init(_name, _symbol);
+        __UUPSUpgradeable_init();
+        __Ownable_init(); // ✅ This initializes the owner
 
-        if (msg.value < _fee) {
+        _mint(address(this), MAX_SUPPLY);
+        _transfer(address(this), _owner, OWNER_SHARE);
+
+        if (msg.value == 0) {
             _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
         }
+        transferOwnership(_owner);
     }
+
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyOwner {}
 
     function requestFriend() external {
         require(
@@ -105,37 +136,38 @@ contract EchoVault is ERC20, Freezable, BasicAccessControl {
         emit Request(friendRequests[msg.sender], msg.sender, owner(), 0);
     }
 
-    //TODO: unFriend and unFollow
-
     function acceptFriend(address _friend) external onlyOwner {
         require(!blockList[_friend], "You have blocked the user");
 
         require(
             friendRequests[_friend] == FriendRequest.REQUEST ||
-                friendRequests[msg.sender] == FriendRequest.UNFRIEND,
+                friendRequests[_friend] == FriendRequest.UNFRIEND,
             "Invalid request type"
         );
         require(!isFriend[_friend], "Already a friend");
         require(friendCount < FRIEND_MAX, "Friend cap reached");
 
-        isFriend[_friend] = true;
-        friendRequests[msg.sender] = FriendRequest.FRIEND;
-        if (friendRequests[msg.sender] == FriendRequest.REQUEST) {
+        if (friendRequests[_friend] == FriendRequest.REQUEST) {
             friendCount++;
             _transfer(address(this), _friend, FRIEND_AMOUNT);
             emit Request(
-                friendRequests[msg.sender],
+                FriendRequest.FRIEND,
                 _friend,
                 msg.sender,
                 FRIEND_AMOUNT
             );
-        } else if (friendRequests[msg.sender] == FriendRequest.UNFRIEND) {
-            emit Request(friendRequests[msg.sender], _friend, msg.sender, 0);
+        } else if (friendRequests[_friend] == FriendRequest.UNFRIEND) {
+            emit Request(FriendRequest.FRIEND, _friend, msg.sender, 0);
         }
+        isFriend[_friend] = true;
+        friendRequests[_friend] = FriendRequest.FRIEND;
     }
 
     function unFriend(address _friend) external onlyOwner {
-        require(!blockList[msg.sender], "You are block by user");
+        require(
+            !blockList[_friend],
+            "You have blocked the user, unfriended already"
+        );
 
         require(
             friendRequests[_friend] == FriendRequest.FRIEND ||
@@ -145,32 +177,32 @@ contract EchoVault is ERC20, Freezable, BasicAccessControl {
         require(isFriend[_friend], "Not a friend");
 
         isFriend[_friend] = false;
-        friendRequests[msg.sender] = FriendRequest.UNFRIEND;
+        friendRequests[_friend] = FriendRequest.UNFRIEND;
         emit Request(FriendRequest.UNFRIEND, _friend, msg.sender, 0);
     }
 
     function blockUser(address _friend) external onlyOwner {
-        if (friendRequests[msg.sender] == FriendRequest.NONE) {
-            friendRequests[msg.sender] = FriendRequest.NONE;
+        if (friendRequests[_friend] == FriendRequest.NONE) {
+            friendRequests[_friend] = FriendRequest.NONE;
         } else {
-            friendRequests[msg.sender] = FriendRequest.UNFRIEND;
+            friendRequests[_friend] = FriendRequest.UNFRIEND;
         }
 
-        if (followRequests[msg.sender] == FollowRequest.NONE) {
-            followRequests[msg.sender] = FollowRequest.NONE;
+        if (followRequests[_friend] == FollowRequest.NONE) {
+            followRequests[_friend] = FollowRequest.NONE;
         } else {
-            followRequests[msg.sender] = FollowRequest.UNFOLLOW;
+            followRequests[_friend] = FollowRequest.UNFOLLOW;
         }
 
         isFriend[_friend] = false;
-        blockList[msg.sender] = true;
+        blockList[_friend] = true;
         isFollower[_friend] = false;
-        emit Request(friendRequests[msg.sender], _friend, msg.sender, 0);
+        emit Request(friendRequests[_friend], _friend, msg.sender, 0);
     }
 
     function unBlockUser(address _friend) external onlyOwner {
-        blockList[msg.sender] = false;
-        emit Request(friendRequests[msg.sender], _friend, msg.sender, 0);
+        blockList[_friend] = false;
+        emit Request(friendRequests[_friend], _friend, msg.sender, 0);
     }
 
     function followUser() external {
