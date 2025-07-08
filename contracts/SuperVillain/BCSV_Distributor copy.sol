@@ -2,9 +2,8 @@
 pragma solidity >=0.8.2;
 
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
-import {IBlockchain_Superheroes_V2} from "../interfaces/IBlockchain_Superheroes_V2.sol";
+import {IBlockchain_Supervillains} from "../interfaces/IBlockchain_Supervillains.sol";
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract BCSV_Distributor is BasicAccessControl {
     using SafeERC20 for IERC20;
@@ -12,15 +11,15 @@ contract BCSV_Distributor is BasicAccessControl {
 
     IERC20 public erc20Token;
 
-    address public blockchainSuperheroes;
+    address public blockchainSupervillains;
 
-    constructor(address _blockchainSuperheroes, IERC20 _erc20Token) {
-        blockchainSuperheroes = _blockchainSuperheroes;
+    constructor(address _blockchainSupervillains, IERC20 _erc20Token) {
+        blockchainSupervillains = _blockchainSupervillains;
         erc20Token = IERC20(_erc20Token);
     }
 
-    uint256 public mintingCount = 37_084_624_000_000_000;
-    uint256 public mintingCap = 37_084_624_000_002_500;
+    uint256 public mintingCount = 1_482_601_649_000_000_000;
+    uint256 public mintingCap = 1_482_601_649_000_002_500;
 
     uint256 decimal = 18;
 
@@ -34,32 +33,47 @@ contract BCSV_Distributor is BasicAccessControl {
 
     receive() external payable {}
 
-    function setContracts(address _blockchainSuperheroes) external onlyOwner {
-        blockchainSuperheroes = _blockchainSuperheroes;
+    function setContracts(address _blockchainSupervillains) external onlyOwner {
+        blockchainSupervillains = _blockchainSupervillains;
+    }
+
+
+    function mintTo(address _owner) public onlyModerators returns (bool) {
+        IBlockchain_Supervillains blockchainSupervillainsContract = IBlockchain_Supervillains(
+                blockchainSupervillains
+            );
+
+        mintingCount = blockchainSupervillainsContract.currentToken() + 1;
+
+        require(mintingCount <= mintingCap, "Minting cap reached");
+
+        blockchainSupervillainsContract.mintNextToken(_owner);
+        emit Mint(_owner, mintingCount);
+        return true;
     }
 
     function mint() external payable isActive returns (bool) {
-        IBlockchain_Superheroes_V2 blockchainSuperherosContract = IBlockchain_Superheroes_V2(
-                blockchainSuperheroes
+        IBlockchain_Supervillains blockchainSupervillainsContract = IBlockchain_Supervillains(
+                blockchainSupervillains
             );
 
-        mintingCount = blockchainSuperherosContract.currentToken() + 1;
+        mintingCount = blockchainSupervillainsContract.currentToken() + 1;
 
         require(!_mintingPausedNative, "Minting paused");
         require(msg.value == nativePriceNFT, "token price not met");
         require(mintingCount <= mintingCap, "Minting cap reached");
 
-        blockchainSuperherosContract.mintNextToken(msg.sender);
+        blockchainSupervillainsContract.mintNextToken(msg.sender);
         emit Mint(msg.sender, mintingCount);
         return true;
     }
 
     function erc20Mint(uint256 _amount) external isActive returns (bool) {
-        IBlockchain_Superheroes_V2 blockchainSuperherosContract = IBlockchain_Superheroes_V2(
-                blockchainSuperheroes
+        IBlockchain_Supervillains blockchainSupervillainsContract = IBlockchain_Supervillains(
+                blockchainSupervillains
             );
 
-        mintingCount = blockchainSuperherosContract.currentToken() + 1;
+        mintingCount = blockchainSupervillainsContract.currentToken() + 1;
 
         require(!_mintingPausedERC20, "Minting paused");
         require(mintingCount < mintingCap, "Max cap reached");
@@ -73,7 +87,7 @@ contract BCSV_Distributor is BasicAccessControl {
             address(this),
             _amount
         );
-        blockchainSuperherosContract.mintNextToken(msg.sender);
+        blockchainSupervillainsContract.mintNextToken(msg.sender);
         emit Mint(msg.sender, mintingCount);
 
         return true;

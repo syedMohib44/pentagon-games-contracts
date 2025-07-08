@@ -19,6 +19,9 @@ contract EchoVaultFactory is
     address public PROXY_ADMIN;
 
     mapping(address => IERC20) public usersERC20;
+    mapping(address => string) public usersSymbol;
+    mapping(address => string) public usersName;
+
     uint256 public fee = 10 * (10 ** 18);
 
     address public echoImplementation;
@@ -40,12 +43,17 @@ contract EchoVaultFactory is
         string memory _name,
         string memory _symbol
     ) external payable {
-        // require(msg.value == fee, "Invalid amount provided");
-
-        // TODO: Put validation of Token and Name here.
         require(msg.sender != address(0), "Token already exists");
 
-        // EchoVault echoVault = new EchoVault(_name, _symbol, fee, msg.sender);
+        require(_name != "" && _symbol != "", "Name or Symbol is invalid");
+
+        require(
+            usersERC20[msg.sender] == address(0),
+            "User already registered"
+        );
+        require(usersSymbol[msg.sender] == "", "Symbol already taken");
+        require(usersName[msg.sender] == "", "Name already taken");
+
         // Encode the initializer call
         bytes memory data = abi.encodeWithSelector(
             bytes4(keccak256("initialize(string,string,address)")),
@@ -61,6 +69,9 @@ contract EchoVaultFactory is
             data // call initialize()
         );
         usersERC20[msg.sender] = IERC20(address(proxy));
+        usersSymbol[msg.sender] = _symbol;
+        usersName[msg.sender] = _name;
+        
         emit Registered(msg.sender, address(proxy));
     }
 

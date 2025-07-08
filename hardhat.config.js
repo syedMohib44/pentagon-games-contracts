@@ -23,7 +23,7 @@ module.exports = {
       allowUnlimitedContractSize: true
     },
     eth: {
-      url: 'https://mainnet.infura.io/v3/2142eded1e254fe08c4b37b74f1ccc41',
+      url: 'https://eth-mainnet.g.alchemy.com/v2/hCJf5s_QtukKsJt7aLE606hLN8Cwc8Sb',
       accounts: [PRIVATE_KEY]
     },
     coretestnet: {
