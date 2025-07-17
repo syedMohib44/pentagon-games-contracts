@@ -73,21 +73,6 @@ contract EchoVault is
     uint256 public followerCount;
     uint256 public referralCount;
 
-    // constructor(
-    //     string memory _name,
-    //     string memory _symbol,
-    //     uint256 _fee,
-    //     address _owner
-    // ) payable ERC20(_name, _symbol) {
-    //     _mint(address(this), MAX_SUPPLY);
-    //     _transfer(address(this), _owner, OWNER_SHARE); // send 80% to owner
-    //     // _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
-
-    //     if (msg.value < _fee) {
-    //         _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
-    //     }
-    // }
-
     constructor() {
         _disableInitializers(); // Required for upgradeable contracts
     }
@@ -161,6 +146,24 @@ contract EchoVault is
         }
         isFriend[_friend] = true;
         friendRequests[_friend] = FriendRequest.FRIEND;
+    }
+
+    function rejectFriendRequest(address _friend) external onlyOwner {
+        require(
+            friendRequests[_friend] == FriendRequest.REQUEST,
+            "No pending request to reject"
+        );
+        friendRequests[_friend] = FriendRequest.NONE;
+        emit Request(FriendRequest.NONE, _friend, msg.sender, 0);
+    }
+
+    function cancelFriendRequest() external {
+        require(
+            friendRequests[msg.sender] == FriendRequest.REQUEST,
+            "No pending request to cancel"
+        );
+        friendRequests[msg.sender] = FriendRequest.NONE;
+        emit Request(FriendRequest.NONE, msg.sender, owner(), 0);
     }
 
     function unFriend(address _friend) external onlyOwner {
@@ -244,18 +247,6 @@ contract EchoVault is
         // token.disperse(msg.sender, FOLLOWER_AMOUNT);
         emit Follow(msg.sender, owner(), 0);
     }
-
-    //TODO: Refere a Prof and if the Mob creates a token then give Prof 0.1% of the Mob token total would be 500 invites alltogeather 5%
-    // And the Mob will get 0.25% of token from Prof
-    // function addReferral() external {
-    //     require(!isReferral[msg.sender], "Already referred");
-    //     require(referralCount < REFERRAL_MAX, "Referral cap reached");
-
-    //     isReferral[msg.sender] = true;
-    //     referralCount++;
-    //     _transfer(address(this), msg.sender, REFERRAL_AMOUNT);
-    //     // token.disperse(msg.sender, REFERRAL_AMOUNT);
-    // }
 
     function getRemaining()
         external

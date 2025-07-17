@@ -1,13 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.0;
 
-import "@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
 import {Freezable} from "../shared/Freezable.sol";
 
-contract Blockchain_Superheroes_V2 is ONFT721, Freezable, BasicAccessControl {
+contract Blockchain_Superheroes_V2 is
+    ERC721,
+    ReentrancyGuard,
+    Freezable,
+    BasicAccessControl
+{
     event MetadataUpdate(uint256 _tokenId);
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
     event Highfive(uint256 _tokenId, address _owner);
@@ -18,7 +24,7 @@ contract Blockchain_Superheroes_V2 is ONFT721, Freezable, BasicAccessControl {
     address public burnAddress = address(this);
     uint256 constant START_TOKEN = 3_344_000_000_000;
     uint256 public currentToken = START_TOKEN;
-    uint256 public _maxCap = 3_344_000_002_500;
+    uint256 public _maxCap = 3_344_000_010_000;
 
     bool public isTransferable = false;
 
@@ -51,10 +57,8 @@ contract Blockchain_Superheroes_V2 is ONFT721, Freezable, BasicAccessControl {
 
     constructor(
         string memory _name,
-        string memory _symbol,
-        uint256 _minGasToTransfer,
-        address _lzEndpoint
-    ) ONFT721(_name, _symbol, _minGasToTransfer, _lzEndpoint) {}
+        string memory _symbol
+    ) ERC721(_name, _symbol) {}
 
     function _baseURI() internal view virtual override returns (string memory) {
         return _baseTokenURI;
@@ -72,52 +76,6 @@ contract Blockchain_Superheroes_V2 is ONFT721, Freezable, BasicAccessControl {
 
     function setNFTPrice(uint256 _nftPrice) public onlyOwner {
         nftPrice = _nftPrice;
-    }
-
-    /**
-     * Method to be called by transak
-     */
-    function mint(
-        address _owner,
-        uint256 _tokenId
-    ) external payable onlyModerators isActive returns (bool) {
-        require(msg.value == nftPrice, "Insufficient price provided");
-
-        uint256 tokenId = currentToken + 1;
-        require(
-            _tokenId == tokenId,
-            "Cannot mint more or less than next token"
-        );
-        require(_owner != address(0), "ERC721: mint to the zero address");
-        require(!_exists(_tokenId), "ERC721: token already minted");
-        require(
-            tokenId >= START_TOKEN && tokenId <= _maxCap,
-            "Token ID is out of range"
-        );
-        _safeMint(_owner, tokenId);
-        currentToken = tokenId;
-
-        return true;
-    }
-
-    /**
-     * Failsafe function if token id not minted and an empty id left in between
-     */
-    function safeMint(
-        address _owner,
-        uint256 _tokenId
-    ) external onlyOwner isActive returns (bool) {
-        require(_tokenId < currentToken, "Cannot mint more than current token");
-        require(_owner != address(0), "ERC721: mint to the zero address");
-        require(!_exists(_tokenId), "ERC721: token already minted");
-        require(
-            _tokenId >= START_TOKEN && _tokenId <= _maxCap,
-            "Token ID is out of range"
-        );
-
-        _safeMint(_owner, _tokenId);
-
-        return true;
     }
 
     function mintNextToken(

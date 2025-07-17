@@ -20,12 +20,11 @@ contract BCSH_Distributor_V2 is BasicAccessControl {
     }
 
     uint256 public mintingCount = 3_344_000_000_000;
-    uint256 public mintingCap = 3_344_000_002_500;
+    uint256 public mintingCap = 3_344_000_010_000;
 
-    uint256 decimal = 18;
-
-    uint256 public nativePriceNFT = 10 * 10 ** decimal;
-    uint256 public erc20PriceNFT = 0;
+    //0.5 PC
+    uint256 public nativePriceNFT = 0;
+    uint256 public erc20PriceNFT = 5000 * (10 ** 18);
 
     bool public _mintingPausedNative = false;
     bool public _mintingPausedERC20 = true;

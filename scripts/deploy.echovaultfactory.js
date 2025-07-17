@@ -6,16 +6,19 @@ async function main() {
 
   const EchoVaultFactoryProxyAdmin = await ethers.getContractFactory("EchoVaultFactoryProxyAdmin");
   this.EchoVaultFactoryProxyAdmin = await EchoVaultFactoryProxyAdmin.connect(addr1).deploy();
+  await this.EchoVaultFactoryProxyAdmin.waitForDeployment();
 
   console.log("EchoVaultFactoryProxyAdmin deployed to:", this.EchoVaultFactoryProxyAdmin.target);
 
 
   const EchoVaultFactory = await ethers.getContractFactory("EchoVaultFactory");
   this.EchoVaultFactory = await EchoVaultFactory.connect(addr1).deploy();
+  await this.EchoVaultFactory.waitForDeployment(); 
 
   console.log("EchoVaultFactory deployed to:", this.EchoVaultFactory.target);
-
-  const initData = this.EchoVaultFactory.interface.encodeFunctionData("initialize", ["0x02Dd1D2BB6ADF261f899ef53a049BdAea2773965"]);
+  // 0x01FdcC3cFeeb608eE4E43b49A3Cc015eB5514307
+  // address is proxy admin
+  const initData = this.EchoVaultFactory.interface.encodeFunctionData("initialize", ["0x9A91b59FC1cBCbCcF9AFAdE4BFa38c48E3BCd83d"]);
 
   const EchoVaultFactoryProxy = await ethers.getContractFactory("EchoVaultFactoryProxy");
   this.EchoVaultFactoryProxy = await EchoVaultFactoryProxy.connect(addr1).deploy(this.EchoVaultFactory.target, this.EchoVaultFactoryProxyAdmin.target, initData);
