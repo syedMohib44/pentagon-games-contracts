@@ -10,6 +10,12 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "../shared/BasicUpgradeableAccessControl.sol";
 import "../shared/Freezable.sol";
 
+interface IImplementationApprovalRegistry {
+    function approvedImplementation(
+        address _implementation
+    ) external view returns (bool);
+}
+
 contract EchoVault is
     Initializable,
     ERC20Upgradeable,
@@ -73,6 +79,8 @@ contract EchoVault is
     uint256 public followerCount;
     uint256 public referralCount;
 
+    IImplementationApprovalRegistry implementationApprovalRegistry;
+
     constructor() {
         _disableInitializers(); // Required for upgradeable contracts
     }
@@ -80,7 +88,8 @@ contract EchoVault is
     function initialize(
         string memory _name,
         string memory _symbol,
-        address _owner
+        address _owner, 
+        address _implementationApprovalRegistry
     ) public payable initializer {
         __ERC20_init(_name, _symbol);
         __UUPSUpgradeable_init();
@@ -93,11 +102,21 @@ contract EchoVault is
             _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
         }
         transferOwnership(_owner);
+        implementationApprovalRegistry = IImplementationApprovalRegistry(
+            _implementationApprovalRegistry
+        );
     }
 
     function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlyOwner {}
+        address _newImplementation
+    ) internal override onlyOwner {
+        require(
+            implementationApprovalRegistry.approvedImplementation(
+                _newImplementation
+            ),
+            "Implementation not allowed"
+        );
+    }
 
     function requestFriend() external {
         require(
@@ -146,24 +165,6 @@ contract EchoVault is
         }
         isFriend[_friend] = true;
         friendRequests[_friend] = FriendRequest.FRIEND;
-    }
-
-    function rejectFriendRequest(address _friend) external onlyOwner {
-        require(
-            friendRequests[_friend] == FriendRequest.REQUEST,
-            "No pending request to reject"
-        );
-        friendRequests[_friend] = FriendRequest.NONE;
-        emit Request(FriendRequest.NONE, _friend, msg.sender, 0);
-    }
-
-    function cancelFriendRequest() external {
-        require(
-            friendRequests[msg.sender] == FriendRequest.REQUEST,
-            "No pending request to cancel"
-        );
-        friendRequests[msg.sender] = FriendRequest.NONE;
-        emit Request(FriendRequest.NONE, msg.sender, owner(), 0);
     }
 
     function unFriend(address _friend) external onlyOwner {

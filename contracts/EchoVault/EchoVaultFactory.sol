@@ -26,10 +26,18 @@ contract EchoVaultFactory is
 
     address public echoImplementation;
 
-    function initialize(address _PROXY_ADMIN) public initializer {
+    IImplementationApprovalRegistry public implementationApprovalRegistry;
+
+    function initialize(
+        address _PROXY_ADMIN,
+        address _implementationApprovalRegistry
+    ) public initializer {
         __Ownable_init(); // Initializes the Ownable contract
         __UUPSUpgradeable_init(); // Initializes the UUPS upgradeable contract
         PROXY_ADMIN = _PROXY_ADMIN;
+        implementationApprovalRegistry = IImplementationApprovalRegistry(
+            _implementationApprovalRegistry
+        );
     }
 
     function _authorizeUpgrade(
@@ -57,13 +65,25 @@ contract EchoVaultFactory is
 
         require(usersSymbol[_symbol] == address(0), "Symbol already taken");
         require(usersName[_name] == address(0), "Name already taken");
+        require(
+            address(implementationApprovalRegistry) != address(0),
+            "Implementation should not be null address"
+        );
 
         // Encode the initializer call
         bytes memory data = abi.encodeWithSelector(
-            bytes4(keccak256("initialize(string,string,address)")),
+            bytes4(keccak256("initialize(string,string,address,address)")),
             _name,
             _symbol,
-            msg.sender
+            msg.sender,
+            address(implementationApprovalRegistry)
+        );
+
+        require(
+            implementationApprovalRegistry.approvedImplementation(
+                echoImplementation
+            ),
+            "Implementation not approved"
         );
 
         // Deploy the proxy
@@ -85,6 +105,14 @@ contract EchoVaultFactory is
 
     function setImplementation(address _echoImplementation) external onlyOwner {
         echoImplementation = _echoImplementation;
+    }
+
+    function setImplementationApprovalRegistry(
+        address _implementationApprovalRegistry
+    ) external onlyOwner {
+        implementationApprovalRegistry = IImplementationApprovalRegistry(
+            _implementationApprovalRegistry
+        );
     }
 
     fallback() external payable {}
