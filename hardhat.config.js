@@ -23,7 +23,7 @@ module.exports = {
       allowUnlimitedContractSize: true
     },
     eth: {
-      url: 'https://eth-mainnet.g.alchemy.com/v2/hCJf5s_QtukKsJt7aLE606hLN8Cwc8Sb',
+      url: 'https://eth.llamarpc.com',
       accounts: [PRIVATE_KEY]
     },
     coretestnet: {
@@ -64,9 +64,7 @@ module.exports = {
     },
     polygon: {
       url: `https://polygon-rpc.com/`,
-      accounts: [PRIVATE_KEY],
-      gas: 21000000,
-      gasPrice: 3000000000000, // Adjust as necessary
+      accounts: [PRIVATE_KEY]
     },
     nebula: {
       url: `https://mainnet-proxy.skalenodes.com/v1/green-giddy-denebola`,
