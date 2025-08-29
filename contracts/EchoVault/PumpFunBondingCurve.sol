@@ -1,14 +1,17 @@
+// Hypebolic law
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 // ---------- INTERFACES ----------
 
 interface IERC20Mintable is IERC20 {
     function mint(address to, uint256 amount) external;
-    function burn(uint256 amount) external; // Standard burn interface
+    function burn(uint256 amount) external;
 }
 
 interface IUniswapV2Router02_payable {
@@ -32,26 +35,19 @@ interface ILPLocker {
     function lock(address lpToken, uint256 amount, uint256 unlockTime, address owner) external;
 }
 
-// ============== PumpFunBondingCurve (Hyperbolic) ==============
+// ============== PumpFunBondingCurve (AMM Math) ==============
 contract PumpFunBondingCurve is Ownable {
 
-    // ----------- Constants & Immutables -----------
-    uint256 public constant SCALE = 1e18; // Fixed-point math scale
-
+    // ----------- Immutables -----------
     IERC20Mintable public immutable TOKEN;
     address public immutable feeTreasury;
     address public immutable creator;
 
     // --- Supply & Graduation Parameters ---
     uint256 public immutable totalSupply;
-    uint256 public immutable curveSupply;     // 80% of total supply, held by this contract
-    uint256 public immutable graduationPC;    // PC raised to trigger graduation (e.g., 85e18)
-    uint256 public immutable tokensToBurn;    // Fixed amount of tokens to burn at graduation
-
-    // --- Hyperbolic Curve Parameters (from y = A - B / (C + x)) ---
-    uint256 private constant A = 1073000191000000000000000000;
-    uint256 private constant B = 321900057300000000000000000000;
-    uint256 private constant C = 30000000000000000000;
+    uint256 public immutable curveSupply;
+    uint256 public immutable graduationPC;
+    uint256 public immutable tokensToBurn;
 
     // ----------- Mutable Config (Owner-only) -----------
     uint256 public feeBps;
@@ -60,9 +56,11 @@ contract PumpFunBondingCurve is Ownable {
     uint256 public lpLockSeconds = 365 days;
     address public pair;
 
-    // ----------- State -----------
-    uint256 public totalPCSpent; // Total PC spent on the curve (net of fees)
-    uint256 public tokensMinted; // Total tokens sold from the curve
+    // ----------- State (AMM Reserves) -----------
+    uint256 public virtualTokenReserves;
+    uint256 public virtualPCReserves;
+    uint256 public realTokenReserves; // Equivalent to tokensMinted
+    uint256 public realPCReserves;    // Equivalent to totalPCSpent
     bool public graduated;
     uint256 private _locked = 1; // Reentrancy guard
 
@@ -91,10 +89,12 @@ contract PumpFunBondingCurve is Ownable {
         address _creator,
         address _token,
         address _feeTreasury,
-        uint256 _totalSupply,   // e.g., 1_000_000_000e18
-        uint256 _graduationPC,  // e.g., 85e18 for ~$69k market cap
-        uint256 _tokensToBurn,  // e.g., 930233e18
-        uint256 _feeBps         // e.g., 300 for 3%
+        uint256 _totalSupply,
+        uint256 _graduationPC,
+        uint256 _tokensToBurn,
+        uint256 _feeBps,
+        uint256 _initialVirtualTokenReserves,
+        uint256 _initialVirtualPCReserves
     ) {
         _transferOwnership(owner);
         creator = _creator;
@@ -105,14 +105,19 @@ contract PumpFunBondingCurve is Ownable {
         if (_feeBps > 1000) revert InvalidAmount();
 
         totalSupply = _totalSupply;
-        curveSupply = (_totalSupply * 80) / 100; // 80% for the curve
+        curveSupply = (_totalSupply * 80) / 100;
         graduationPC = _graduationPC;
         tokensToBurn = _tokensToBurn;
         feeBps = _feeBps;
 
+        // --- Initialize AMM Reserves ---
+        virtualTokenReserves = _initialVirtualTokenReserves;
+        virtualPCReserves = _initialVirtualPCReserves;
+        realTokenReserves = curveSupply; // Start with all curve tokens as real reserves
+
         // --- One-Step Launch: Mint and Distribute ---
         TOKEN.mint(address(this), _totalSupply);
-        uint256 creatorAmount = (_totalSupply * 20) / 100; // 20% for the creator
+        uint256 creatorAmount = (_totalSupply * 20) / 100;
         TOKEN.transfer(_creator, creatorAmount);
     }
 
@@ -142,18 +147,23 @@ contract PumpFunBondingCurve is Ownable {
         }
         uint256 pcNet = pcIn - fee;
 
+        // --- AMM Math: x * y = k ---
         uint256 tokensOut = _getTokensForPC(pcNet);
 
-        if (tokensMinted + tokensOut > curveSupply) {
+        if (tokensOut > realTokenReserves) {
             revert CurveDepleted();
         }
-        tokensMinted += tokensOut;
-        totalPCSpent += pcNet;
+
+        // --- Update Reserves ---
+        virtualPCReserves += pcNet;
+        virtualTokenReserves -= tokensOut;
+        realPCReserves += pcNet;
+        realTokenReserves -= tokensOut;
 
         TOKEN.transfer(msg.sender, tokensOut);
         emit Bought(msg.sender, pcIn, tokensOut);
 
-        if (totalPCSpent >= graduationPC) {
+        if (realPCReserves >= graduationPC) {
             _graduate();
         }
     }
@@ -161,27 +171,17 @@ contract PumpFunBondingCurve is Ownable {
     // ----------- Graduation Logic -----------
     function _graduate() internal {
         graduated = true;
-
-        // 1. Burn Tokens from the contract's balance
         TOKEN.burn(tokensToBurn);
-
-        // 2. Prepare for Liquidity
         uint256 pcForLP = address(this).balance;
-        // Use the contract's entire remaining token balance for LP
         uint256 tokenForLP = TOKEN.balanceOf(address(this));
 
-        // 3. Add Liquidity
         TOKEN.approve(address(router), tokenForLP);
         (, , uint256 lpAmount) = router.addLiquidityETH{value: pcForLP}(
             address(TOKEN),
             tokenForLP,
-            0, // amountTokenMin
-            0, // amountETHMin
-            address(this),
-            block.timestamp
+            0, 0, address(this), block.timestamp
         );
 
-        // 4. Lock or Burn LP Tokens
         address wpc = router.WETH();
         address _pair = IUniswapV2Factory(router.factory()).getPair(address(TOKEN), wpc);
         pair = _pair;
@@ -201,23 +201,20 @@ contract PumpFunBondingCurve is Ownable {
         if (graduated || pcIn == 0) return 0;
         uint256 pcNet = (pcIn * (10_000 - feeBps)) / 10_000;
         tokensOut = _getTokensForPC(pcNet);
-        if (tokensMinted + tokensOut > curveSupply) {
-            tokensOut = curveSupply - tokensMinted;
-        }
-        return tokensOut;
+        return Math.min(tokensOut, realTokenReserves);
     }
 
-    // ----------- Math Helpers (Hyperbolic Curve) -----------
-    function _getTokensForPC(uint256 pcNet) internal view returns (uint256) {
-        uint256 currentTotalPC = totalPCSpent;
-        uint256 nextTotalPC = currentTotalPC + pcNet;
+    // ----------- Math Helpers (AMM) -----------
+    function _getTokensForPC(uint256 pcAmount) internal view returns (uint256) {
+        if (pcAmount == 0) return 0;
+        // Using 128-bit integers for intermediate calculations to prevent overflow
+        uint256 k = uint256(virtualPCReserves) * uint256(virtualTokenReserves);
+        uint256 newVirtualPCReserves = virtualPCReserves + pcAmount;
+        uint256 newVirtualTokenReserves = k / newVirtualPCReserves;
 
-        uint256 y_current_term = B / (C + currentTotalPC);
-        uint256 y_current = A - y_current_term;
-
-        uint256 y_next_term = B / (C + nextTotalPC);
-        uint256 y_next = A - y_next_term;
-        
-        return (y_next - y_current) / SCALE;
+        // The +1 in the Rust code is a common trick to handle rounding in integer division.
+        // Solidity's integer division truncates, so we don't need it here.
+        // The difference is the amount of tokens out.
+        return virtualTokenReserves - newVirtualTokenReserves;
     }
 }

@@ -88,13 +88,14 @@ contract EchoVault is
     function initialize(
         string memory _name,
         string memory _symbol,
-        address _owner, 
+        address _owner,
         address _implementationApprovalRegistry
     ) public payable initializer {
         __ERC20_init(_name, _symbol);
         __UUPSUpgradeable_init();
         __Ownable_init(); // ✅ This initializes the owner
 
+        //Initialize Bonding Cuver here
         _mint(address(this), MAX_SUPPLY);
         _transfer(address(this), _owner, OWNER_SHARE);
 
