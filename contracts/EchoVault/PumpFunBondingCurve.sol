@@ -1,22 +1,24 @@
 // Hypebolic law
 
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity >=0.6.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 // ---------- INTERFACES ----------
 
-interface IERC20Mintable is IERC20 {
-    function mint(address to, uint256 amount) external;
+interface IEchoVault is IERC20 {
     function burn(uint256 amount) external;
 }
 
 interface IUniswapV2Router02_payable {
     function factory() external pure returns (address);
+
     function WETH() external pure returns (address);
+
     function addLiquidityETH(
         address token,
         uint amountTokenDesired,
@@ -24,22 +26,32 @@ interface IUniswapV2Router02_payable {
         uint amountETHMin,
         address to,
         uint deadline
-    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
+    )
+        external
+        payable
+        returns (uint amountToken, uint amountETH, uint liquidity);
 }
 
 interface IUniswapV2Factory {
-    function getPair(address tokenA, address tokenB) external view returns (address pair);
+    function getPair(
+        address tokenA,
+        address tokenB
+    ) external view returns (address pair);
 }
 
 interface ILPLocker {
-    function lock(address lpToken, uint256 amount, uint256 unlockTime, address owner) external;
+    function lock(
+        address lpToken,
+        uint256 amount,
+        uint256 unlockTime,
+        address owner
+    ) external;
 }
 
 // ============== PumpFunBondingCurve (AMM Math) ==============
 contract PumpFunBondingCurve is Ownable {
-
     // ----------- Immutables -----------
-    IERC20Mintable public immutable TOKEN;
+    IEchoVault public immutable TOKEN;
     address public immutable feeTreasury;
     address public immutable creator;
 
@@ -60,30 +72,23 @@ contract PumpFunBondingCurve is Ownable {
     uint256 public virtualTokenReserves;
     uint256 public virtualPCReserves;
     uint256 public realTokenReserves; // Equivalent to tokensMinted
-    uint256 public realPCReserves;    // Equivalent to totalPCSpent
+    uint256 public realPCReserves; // Equivalent to totalPCSpent
     bool public graduated;
-    uint256 private _locked = 1; // Reentrancy guard
 
     // ----------- Events & Errors -----------
     event Bought(address indexed buyer, uint256 pcIn, uint256 tokensOut);
-    event Graduated(uint256 pcToLP, uint256 tokensToLP, uint256 tokensBurned, address indexed pair);
+    event Graduated(
+        uint256 pcToLP,
+        uint256 tokensToLP,
+        uint256 tokensBurned,
+        address indexed pair
+    );
     event ConfigUpdated(address router, address locker, uint256 lockSeconds);
     event FeeUpdated(uint256 newFeeBps);
     error AlreadyGraduated();
     error InvalidAmount();
-    error BadDecimals();
-    error Reentrancy();
     error CurveDepleted();
 
-    // ----------- Modifiers -----------
-    modifier nonReentrant() {
-        if (_locked == 2) revert Reentrancy();
-        _locked = 2;
-        _;
-        _locked = 1;
-    }
-
-    // ----------- Constructor -----------
     constructor(
         address owner,
         address _creator,
@@ -98,14 +103,13 @@ contract PumpFunBondingCurve is Ownable {
     ) {
         _transferOwnership(owner);
         creator = _creator;
-        TOKEN = IERC20Mintable(_token);
+        TOKEN = IEchoVault(_token);
         feeTreasury = _feeTreasury;
 
-        if (TOKEN.decimals() != 18) revert BadDecimals();
         if (_feeBps > 1000) revert InvalidAmount();
 
         totalSupply = _totalSupply;
-        curveSupply = (_totalSupply * 80) / 100;
+        curveSupply = (_totalSupply * 60) / 100;
         graduationPC = _graduationPC;
         tokensToBurn = _tokensToBurn;
         feeBps = _feeBps;
@@ -115,14 +119,18 @@ contract PumpFunBondingCurve is Ownable {
         virtualPCReserves = _initialVirtualPCReserves;
         realTokenReserves = curveSupply; // Start with all curve tokens as real reserves
 
-        // --- One-Step Launch: Mint and Distribute ---
-        TOKEN.mint(address(this), _totalSupply);
-        uint256 creatorAmount = (_totalSupply * 20) / 100;
-        TOKEN.transfer(_creator, creatorAmount);
+        // // --- One-Step Launch: Mint and Distribute ---
+        // TOKEN.mint(address(this), _totalSupply);
+        // uint256 creatorAmount = (_totalSupply * 20) / 100;
+        // TOKEN.transfer(_creator, creatorAmount);
     }
 
     // ----------- Admin Configuration -----------
-    function setRouterAndLocker(address _router, address _locker, uint256 _lockSeconds) external onlyOwner {
+    function setRouterAndLocker(
+        address _router,
+        address _locker,
+        uint256 _lockSeconds
+    ) external onlyOwner {
         router = IUniswapV2Router02_payable(_router);
         lpLocker = _locker;
         lpLockSeconds = _lockSeconds;
@@ -179,16 +187,27 @@ contract PumpFunBondingCurve is Ownable {
         (, , uint256 lpAmount) = router.addLiquidityETH{value: pcForLP}(
             address(TOKEN),
             tokenForLP,
-            0, 0, address(this), block.timestamp
+            0,
+            0,
+            address(this),
+            block.timestamp
         );
 
         address wpc = router.WETH();
-        address _pair = IUniswapV2Factory(router.factory()).getPair(address(TOKEN), wpc);
+        address _pair = IUniswapV2Factory(router.factory()).getPair(
+            address(TOKEN),
+            wpc
+        );
         pair = _pair;
 
         if (lpLocker != address(0)) {
             IERC20(_pair).approve(lpLocker, lpAmount);
-            ILPLocker(lpLocker).lock(_pair, lpAmount, block.timestamp + lpLockSeconds, address(0));
+            ILPLocker(lpLocker).lock(
+                _pair,
+                lpAmount,
+                block.timestamp + lpLockSeconds,
+                address(0)
+            );
         } else {
             IERC20(_pair).transfer(address(0xdead), lpAmount);
         }

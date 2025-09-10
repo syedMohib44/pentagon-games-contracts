@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "../shared/BasicUpgradeableAccessControl.sol";
 import "../shared/Freezable.sol";
+import "./PumpFunBondingCurve.sol";
 
 interface IImplementationApprovalRegistry {
     function approvedImplementation(
@@ -53,8 +54,8 @@ contract EchoVault is
     bool public isTransferable = false;
 
     uint256 public constant MAX_SUPPLY = 100_000_000 * 1e18;
-    uint256 public constant OWNER_SHARE = (MAX_SUPPLY * 80) / 100; // 80%
-    uint256 public constant DEV_SHARE = (MAX_SUPPLY * 5) / 100; // 5%
+    uint256 public constant OWNER_SHARE = (MAX_SUPPLY * 20) / 100; // 20%
+    uint256 public constant BONDING_CURVE_SHARE = (MAX_SUPPLY * 60) / 100; // 60%
 
     address public constant DEV_ADDRESS =
         0xB2e3e82a95f5c4c47E30A5b420Ac4f99d32EF61f;
@@ -79,7 +80,8 @@ contract EchoVault is
     uint256 public followerCount;
     uint256 public referralCount;
 
-    IImplementationApprovalRegistry implementationApprovalRegistry;
+    PumpFunBondingCurve public pumpfun;
+    IImplementationApprovalRegistry public implementationApprovalRegistry;
 
     constructor() {
         _disableInitializers(); // Required for upgradeable contracts
@@ -93,15 +95,28 @@ contract EchoVault is
     ) public payable initializer {
         __ERC20_init(_name, _symbol);
         __UUPSUpgradeable_init();
-        __Ownable_init(); // ✅ This initializes the owner
+        __Ownable_init();
 
-        //Initialize Bonding Cuver here
         _mint(address(this), MAX_SUPPLY);
         _transfer(address(this), _owner, OWNER_SHARE);
 
-        if (msg.value == 0) {
-            _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
-        }
+        //Initialize Bonding Cuver here
+        pumpfun = new PumpFunBondingCurve(
+            _owner,
+            _owner,
+            address(this),
+            DEV_ADDRESS,
+            MAX_SUPPLY,
+            250000000000000000000,
+            930233000000000000000000,
+            300,
+            500000000000000000000000000,
+            1000000000000000000
+        );
+        _transfer(address(this), address(pumpfun), BONDING_CURVE_SHARE);
+        // if (msg.value == 0) {
+        //     _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
+        // }
         transferOwnership(_owner);
         implementationApprovalRegistry = IImplementationApprovalRegistry(
             _implementationApprovalRegistry

@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
 
 contract MiningFee is BasicAccessControl {
-    event Fee(address owner, uint256 amount, uint256 createAt);
+    event Fee(address indexed owner, uint256 amount, uint256 createdAt);
 
     struct UserFee {
         FEE_STATUS status;
@@ -20,45 +21,32 @@ contract MiningFee is BasicAccessControl {
     mapping(address => UserFee) public userFeeStatus;
 
     uint256 public fee = 1 ether;
-    uint256 public resetTime = 24 hours;
+
 
     function mineWithFee() external payable {
         require(msg.value == fee, "Fee provided is insufficient");
+
         UserFee storage userFee = userFeeStatus[msg.sender];
 
-        uint256 currentTime = block.timestamp;
-        uint256 resetTimeExpirey = userFee.updatedAt + resetTime;
 
-        require(
-            currentTime > resetTimeExpirey ||
-                userFee.status == FEE_STATUS.NO_FEE ||
-                userFee.status == FEE_STATUS.NONE,
-            "User already paid the fee"
-        );
-        uint256 createdAt = userFee.createdAt;
-        if (createdAt == 0) userFee.createdAt = currentTime;
-        userFee.updatedAt = currentTime;
+        if (userFee.createdAt == 0) {
+            userFee.createdAt = block.timestamp;
+        }
+
+        userFee.updatedAt = block.timestamp;
         userFee.status = FEE_STATUS.FEE;
 
         emit Fee(msg.sender, msg.value, block.timestamp);
     }
 
-    function mineWithNoFee() external payable {
-        require(msg.value == 0, "No fee required");
-
+    function mineWithNoFee() external {
         UserFee storage userFee = userFeeStatus[msg.sender];
 
-        uint256 currentTime = block.timestamp;
-        uint256 resetTimeExpirey = userFee.updatedAt + resetTime;
+        if (userFee.createdAt == 0) {
+            userFee.createdAt = block.timestamp;
+        }
 
-        require(
-            currentTime > resetTimeExpirey ||
-                userFeeStatus[msg.sender].status == FEE_STATUS.NONE,
-            "User already paid the fee"
-        );
-        uint256 createdAt = userFee.createdAt;
-        if (createdAt == 0) userFee.createdAt = currentTime;
-        userFee.updatedAt = currentTime;
+        userFee.updatedAt = block.timestamp;
         userFee.status = FEE_STATUS.NO_FEE;
 
         emit Fee(msg.sender, 0, block.timestamp);
@@ -68,9 +56,6 @@ contract MiningFee is BasicAccessControl {
         fee = _fee;
     }
 
-    function updateResetTime(uint256 _resetTime) external onlyModerators {
-        resetTime = _resetTime;
-    }
 
     function withdraw() external onlyOwner {
         (bool success, ) = msg.sender.call{value: address(this).balance}("");

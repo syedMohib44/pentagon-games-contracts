@@ -13,6 +13,8 @@ contract GunniesKiller is ReentrancyGuard, BasicAccessControl {
         uint256 totalKill
     );
 
+    event TotalKill(address from, uint256 totalKill, uint256 lastUpdate);
+
     mapping(address => bool) public whitelisted;
 
     function kill(string memory _matchId, address _to) external nonReentrant {
@@ -29,6 +31,13 @@ contract GunniesKiller is ReentrancyGuard, BasicAccessControl {
         require(_to != address(0), "Cannot kill null address");
         require(whitelisted[msg.sender] == true, "Player is not whitelisted");
         emit KillTotal(_matchId, msg.sender, _to, _totalKill);
+    }
+
+    function killWithCount(
+        uint256 _totalKill
+    ) external nonReentrant {
+        require(whitelisted[msg.sender] == true, "Player is not whitelisted");
+        emit TotalKill(msg.sender, _totalKill, block.timestamp);
     }
 
     function toggleWhitelist(address _address) external onlyModerators {

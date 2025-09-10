@@ -92,6 +92,7 @@ contract EchoVaultFactory is
             PROXY_ADMIN, // proxy admin (could be the factory, or a multisig)
             data // call initialize()
         );
+
         usersERC20[msg.sender] = IERC20(address(proxy));
         usersSymbol[_symbol] = msg.sender;
         usersName[_name] = msg.sender;
