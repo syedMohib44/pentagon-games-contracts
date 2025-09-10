@@ -49,7 +49,7 @@ interface ILPLocker {
 }
 
 // ============== PumpFunBondingCurve (AMM Math) ==============
-contract PumpFunBondingCurve is Ownable {
+contract PumpFunBondingCurve is Ownable, ReentrancyGuard {
     // ----------- Immutables -----------
     IEchoVault public immutable TOKEN;
     address public immutable feeTreasury;
