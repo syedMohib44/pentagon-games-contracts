@@ -27,10 +27,12 @@ contract EchoVaultFactory is
     address public echoImplementation;
 
     IImplementationApprovalRegistry public implementationApprovalRegistry;
+    address public pumpFunBondingCurveRegistery;
 
     function initialize(
         address _PROXY_ADMIN,
-        address _implementationApprovalRegistry
+        address _implementationApprovalRegistry,
+        address _pumpFunBondingCurveRegistery
     ) public initializer {
         __Ownable_init(); // Initializes the Ownable contract
         __UUPSUpgradeable_init(); // Initializes the UUPS upgradeable contract
@@ -38,6 +40,7 @@ contract EchoVaultFactory is
         implementationApprovalRegistry = IImplementationApprovalRegistry(
             _implementationApprovalRegistry
         );
+        pumpFunBondingCurveRegistery = _pumpFunBondingCurveRegistery;
     }
 
     function _authorizeUpgrade(
@@ -72,11 +75,12 @@ contract EchoVaultFactory is
 
         // Encode the initializer call
         bytes memory data = abi.encodeWithSelector(
-            bytes4(keccak256("initialize(string,string,address,address)")),
+            bytes4(keccak256("initialize(string,string,address,address,address)")),
             _name,
             _symbol,
             msg.sender,
-            address(implementationApprovalRegistry)
+            address(implementationApprovalRegistry),
+            pumpFunBondingCurveRegistery
         );
 
         require(

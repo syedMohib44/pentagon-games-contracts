@@ -18,8 +18,8 @@ async function main() {
   console.log("EchoVaultFactory deployed to:", this.EchoVaultFactory.target);
   // 0x01FdcC3cFeeb608eE4E43b49A3Cc015eB5514307
   // address is proxy admin
-  // ProxyAdmin, ImplementationApprovalRegistry
-  const initData = this.EchoVaultFactory.interface.encodeFunctionData("initialize", ["0x7613B4638c4b034aB9E859Ba8f07429B5d6f9845", "0xb91d3247eF5166f01260a4255AAf8239D1445Cbd"]);
+  // ProxyAdmin, ImplementationApprovalRegistry, PumpFunBondingCurveRegistery
+  const initData = this.EchoVaultFactory.interface.encodeFunctionData("initialize", ["0xB4327d38578971387e3b1F4EFD178B561380B395", "0x8050A13177c0e0De3ac62B61C38110F7f0cfBFc7", "0x51b54c8Ee8eE1Bd276B336c8a28Bd20dB94ae1AA"]);
 
   const EchoVaultFactoryProxy = await ethers.getContractFactory("EchoVaultFactoryProxy");
   this.EchoVaultFactoryProxy = await EchoVaultFactoryProxy.connect(addr1).deploy(this.EchoVaultFactory.target, this.EchoVaultFactoryProxyAdmin.target, initData);

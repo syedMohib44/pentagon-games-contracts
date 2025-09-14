@@ -82,7 +82,8 @@ module.exports = {
     // },
     polygonamoy: {
       url: `https://rpc-amoy.polygon.technology`,
-      accounts: [PRIVATE_KEY]
+      accounts: [PRIVATE_KEY],
+      gasPrice: 30000000000 
     },
     avax: {
       url: `https://api.avax.network/ext/bc/C/rpc`,
