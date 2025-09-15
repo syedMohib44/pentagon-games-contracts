@@ -13,14 +13,6 @@ async function main() {
   const ImplementationApprovalRegistry = await ethers.getContractFactory("ImplementationApprovalRegistry");
   this.ImplementationApprovalRegistry = await ImplementationApprovalRegistry.connect(addr1).deploy();
 
-  const PumpFunBondingCurve = await ethers.getContractFactory("PumpFunBondingCurve");
-  this.PumpFunBondingCurve = await PumpFunBondingCurve.connect(addr1).deploy();
-
-  await new Promise(r => setTimeout(r, 60000));
-
-  const PumpFunBondingCurveRegistery = await ethers.getContractFactory("PumpFunBondingCurveRegistery");
-  this.PumpFunBondingCurveRegistery = await PumpFunBondingCurveRegistery.connect(addr1).deploy(this.PumpFunBondingCurve.target);
-
   console.log("EchoVault deployed to:", this.EchoVault.target);
 
   await new Promise(r => setTimeout(r, 60000));
@@ -38,17 +30,6 @@ async function main() {
   await hre.run("verify:verify", {
     address: this.ImplementationApprovalRegistry.target,
     contract: "contracts/EchoVault/ImplementationApprovalRegistry.sol:ImplementationApprovalRegistry"
-  });
-
-  await hre.run("verify:verify", {
-    address: this.PumpFunBondingCurve.target,
-    contract: "contracts/EchoVault/PumpFunBondingCurve.sol:PumpFunBondingCurve"
-  });
-
-  await hre.run("verify:verify", {
-    address: this.PumpFunBondingCurveRegistery.target,
-    contract: "contracts/EchoVault/PumpFunBondingCurveRegistery.sol:PumpFunBondingCurveRegistery",
-    constructorArguments: [this.PumpFunBondingCurve.target]
   });
 
 }
