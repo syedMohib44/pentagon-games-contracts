@@ -10,42 +10,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "../shared/BasicUpgradeableAccessControl.sol";
 import "../shared/Freezable.sol";
 import "./PumpFunBondingCurve.sol";
-import "./PumpFunBondingCurveRegistery.sol";
-
-// --- Interfaces needed for the graduation process ---
-interface IUniswapV2Router02_payable {
-    function factory() external pure returns (address);
-
-    function WETH() external pure returns (address);
-
-    function addLiquidityETH(
-        address token,
-        uint amountTokenDesired,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline
-    )
-        external
-        payable
-        returns (uint amountToken, uint amountETH, uint liquidity);
-}
-
-interface IUniswapV2Factory {
-    function getPair(
-        address tokenA,
-        address tokenB
-    ) external view returns (address pair);
-}
-
-interface ILPLocker {
-    function lock(
-        address lpToken,
-        uint256 amount,
-        uint256 unlockTime,
-        address owner
-    ) external;
-}
 
 interface IImplementationApprovalRegistry {
     function approvedImplementation(
@@ -85,12 +49,6 @@ contract EchoVault is
         uint256 amount
     );
     event Follow(address friend, address owner, uint256 amount);
-    event Graduated(
-        uint256 pcToLP,
-        uint256 tokensToLP,
-        uint256 tokensBurned,
-        address indexed pair
-    );
 
     mapping(address => bool) public transferable;
     bool public isTransferable = false;
@@ -122,18 +80,8 @@ contract EchoVault is
     uint256 public followerCount;
     uint256 public referralCount;
 
-    // PumpFunBondingCurve public pumpfun;
-    uint256 public sold;
-    uint256 public pcRaised;
-    uint256 public f;
-    bool public graduated;
-
-    IUniswapV2Router02_payable public router;
-    address public lpLocker;
-    uint256 public lpLockSeconds = 365 days;
-
+    PumpFunBondingCurve public pumpfun;
     IImplementationApprovalRegistry public implementationApprovalRegistry;
-    PumpFunBondingCurveRegistery public pumpFunRegistery;
 
     constructor() {
         _disableInitializers(); // Required for upgradeable contracts
@@ -144,7 +92,9 @@ contract EchoVault is
         string memory _symbol,
         address _owner,
         address _implementationApprovalRegistry,
-        address _pumpFunRegistery
+        address _router,
+        address _lpLocker,
+        uint256 _lpLockSeconds
     ) public payable initializer {
         __ERC20_init(_name, _symbol);
         __UUPSUpgradeable_init();
@@ -154,8 +104,22 @@ contract EchoVault is
         _transfer(address(this), _owner, OWNER_SHARE);
 
         //Initialize Bonding Cuver here
-        // pumpfun = PumpFunBondingCurve(_pumpfunImpl);
-
+        pumpfun = new PumpFunBondingCurve(
+            _owner,
+            _owner,
+            address(this),
+            DEV_ADDRESS,
+            MAX_SUPPLY,
+            250000000000000000000,
+            930233000000000000000000,
+            300,
+            500000000000000000000000000,
+            1000000000000000000,
+            _router,
+            _lpLocker,
+            _lpLockSeconds
+        );
+        _transfer(address(this), address(pumpfun), BONDING_CURVE_SHARE);
         // if (msg.value == 0) {
         //     _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
         // }
@@ -163,7 +127,6 @@ contract EchoVault is
         implementationApprovalRegistry = IImplementationApprovalRegistry(
             _implementationApprovalRegistry
         );
-        pumpFunRegistery = PumpFunBondingCurveRegistery(_pumpFunRegistery);
     }
 
     function _authorizeUpgrade(
@@ -175,86 +138,6 @@ contract EchoVault is
             ),
             "Implementation not allowed"
         );
-    }
-
-    // --- Bonding Curve Interaction ---
-
-    function setRouterAndLocker(
-        address _router,
-        address _locker
-    ) external onlyOwner {
-        router = IUniswapV2Router02_payable(_router);
-        lpLocker = _locker;
-    }
-
-    function buy() external payable {
-        require(!graduated, "Sale has already graduated");
-
-        PumpFunBondingCurve pumpFun = PumpFunBondingCurve(
-            pumpFunRegistery.getPumpFunBoundingCurve()
-        );
-        require(address(pumpFun) != address(0), "Pump Fun address not set yet");
-
-        (
-            uint256 tokensOut,
-            uint256 newSold,
-            uint256 newPcRaised,
-            uint256 newF
-        ) = pumpFun.calculateBuy(msg.value, sold, pcRaised, f);
-
-        sold = newSold;
-        pcRaised = newPcRaised;
-        f = newF;
-
-        _transfer(address(this), msg.sender, tokensOut);
-
-        if (pcRaised >= pumpFun.TARGET_PC() || sold >= pumpFun.CURVE_SUPPLY()) {
-            graduated = true;
-            _graduate();
-        }
-    }
-
-    function _graduate() internal {
-        PumpFunBondingCurve pumpFun = PumpFunBondingCurve(
-            pumpFunRegistery.getPumpFunBoundingCurve()
-        );
-        
-        uint256 tokensToBurn = pumpFun.TOKENS_TO_BURN();
-        _burn(address(this), tokensToBurn);
-
-        uint256 pcForLP = address(this).balance;
-        uint256 tokenForLP = balanceOf(address(this));
-
-        require(address(router) != address(0), "DEX router is not set");
-
-        _approve(address(this), address(router), tokenForLP);
-
-        (, , uint256 lpAmount) = router.addLiquidityETH{value: pcForLP}(
-            address(this),
-            tokenForLP,
-            0,
-            0,
-            address(this),
-            block.timestamp
-        );
-
-        address pair = IUniswapV2Factory(router.factory()).getPair(
-            address(this),
-            router.WETH()
-        );
-        if (lpLocker != address(0)) {
-            IERC20(pair).approve(lpLocker, lpAmount);
-            ILPLocker(lpLocker).lock(
-                pair,
-                lpAmount,
-                block.timestamp + lpLockSeconds,
-                address(0)
-            );
-        } else {
-            IERC20(pair).transfer(address(0xdead), lpAmount);
-        }
-
-        emit Graduated(pcForLP, tokenForLP, tokensToBurn, pair);
     }
 
     function requestFriend() external {

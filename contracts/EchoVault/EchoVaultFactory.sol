@@ -25,14 +25,17 @@ contract EchoVaultFactory is
     uint256 public fee = 10 * (10 ** 18);
 
     address public echoImplementation;
+    address public router;
+    address public locker;
+    uint256 public lockSeconds = 600;
 
     IImplementationApprovalRegistry public implementationApprovalRegistry;
-    address public pumpFunBondingCurveRegistery;
 
     function initialize(
         address _PROXY_ADMIN,
         address _implementationApprovalRegistry,
-        address _pumpFunBondingCurveRegistery
+        address _router,
+        address _locker
     ) public initializer {
         __Ownable_init(); // Initializes the Ownable contract
         __UUPSUpgradeable_init(); // Initializes the UUPS upgradeable contract
@@ -40,7 +43,6 @@ contract EchoVaultFactory is
         implementationApprovalRegistry = IImplementationApprovalRegistry(
             _implementationApprovalRegistry
         );
-        pumpFunBondingCurveRegistery = _pumpFunBondingCurveRegistery;
     }
 
     function _authorizeUpgrade(
@@ -75,12 +77,18 @@ contract EchoVaultFactory is
 
         // Encode the initializer call
         bytes memory data = abi.encodeWithSelector(
-            bytes4(keccak256("initialize(string,string,address,address,address)")),
+            bytes4(
+                keccak256(
+                    "initialize(string,string,address,address,address,address,uint256)"
+                )
+            ),
             _name,
             _symbol,
             msg.sender,
             address(implementationApprovalRegistry),
-            pumpFunBondingCurveRegistery
+            router,
+            locker,
+            lockSeconds
         );
 
         require(
@@ -110,6 +118,17 @@ contract EchoVaultFactory is
 
     function setImplementation(address _echoImplementation) external onlyOwner {
         echoImplementation = _echoImplementation;
+    }
+
+    function setRouterAndLocker(
+        address _router,
+        address _locker,
+        uint256 _lockSeconds
+    ) external onlyOwner {
+        router = IPentaswapV2Router02_payable(_router);
+        lpLocker = _locker;
+        lpLockSeconds = _lockSeconds;
+        emit ConfigUpdated(_router, _locker, _lockSeconds);
     }
 
     function setImplementationApprovalRegistry(

@@ -1,89 +1,74 @@
+// Hypebolic law
+
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.2;
+pragma solidity >=0.6.6;
 
-/**
- * @title PumpFunBondingCurve (Stateless Logic Contract)
- * @notice This is a stateless "calculator" contract. It holds no funds or data.
- * The EchoVault contract calls this contract to perform bonding curve math.
- * All constants for the sale are defined here for consistency.
- */
-contract PumpFunBondingCurve {
-    // ----------- Constants -----------
-    // These public constants are accessed by the EchoVault contract.
-    uint256 public constant SCALE = 1e18;
-    uint256 public constant MAX_SUPPLY = 100_000_000 * 1e18;
-    uint256 public constant CURVE_SUPPLY = (MAX_SUPPLY * 80) / 100;
-    uint256 public constant TARGET_PC = 250 * 1e18;
-    uint256 public constant TOKENS_TO_BURN = 930233 * 1e18;
-    uint256 public constant FEE_BPS = 300;
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-    constructor() {}
 
-    // ----------- Pure Calculation Functions -----------
+interface IEchoVault is IERC20 {
+    function burn(uint256 amount) external;
+}
 
-    /**
-     * @notice Calculates the result of a buy transaction without changing state.
-     * @param pcIn The amount of PC being spent by the user.
-     * @param currentSold The current number of tokens sold on the curve.
-     * @param currentPcRaised The current amount of PC raised.
-     * @param currentF The current fraction of the curve that is filled.
-     * @return tokensOut The number of tokens the user should receive.
-     * @return newSold The updated number of tokens sold.
-     * @return newPcRaised The updated amount of PC raised.
-     * @return newF The updated fraction of the curve filled.
-     */
-    function calculateBuy(
-        uint256 pcIn,
-        uint256 currentSold,
-        uint256 currentPcRaised,
-        uint256 currentF
+interface IPentaswapV2Router02_payable {
+    function factory() external pure returns (address);
+
+    function WETH() external pure returns (address);
+
+    function addLiquidityETH(
+        address token,
+        uint amountTokenDesired,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
     )
         external
-        pure
-        returns (
-            uint256 tokensOut,
-            uint256 newSold,
-            uint256 newPcRaised,
-            uint256 newF
-        )
-    {
-        if (pcIn == 0) return (0, currentSold, currentPcRaised, currentF);
+        payable
+        returns (uint amountToken, uint amountETH, uint liquidity);
+}
 
-        uint256 pcNet = (pcIn * (10000 - FEE_BPS)) / 10000;
+interface IPentaswapV2Factory {
+    function getPair(
+        address tokenA,
+        address tokenB
+    ) external view returns (address pair);
+}
 
-        uint256 C0 = _cost(currentF);
-        uint256 C1 = C0 + pcNet;
-        newF = _fractionAtCost(C1);
-        if (newF > SCALE) newF = SCALE;
+interface ILPLocker {
+    function lock(
+        address lpToken,
+        uint256 amount,
+        uint256 unlockTime,
+        address owner
+    ) external;
+}
 
-// ============== PumpFunBondingCurve (AMM Math) ==============
-contract PumpFunBondingCurve is Ownable {
-    // ----------- Immutables -----------
+contract PumpFunBondingCurve is Ownable, ReentrancyGuard {
     IEchoVault public immutable TOKEN;
     address public immutable feeTreasury;
     address public immutable creator;
 
-    // --- Supply & Graduation Parameters ---
     uint256 public immutable totalSupply;
     uint256 public immutable curveSupply;
     uint256 public immutable graduationPC;
     uint256 public immutable tokensToBurn;
 
-    // ----------- Mutable Config (Owner-only) -----------
     uint256 public feeBps;
-    IUniswapV2Router02_payable public router;
+    IPentaswapV2Router02_payable public router;
     address public lpLocker;
     uint256 public lpLockSeconds = 365 days;
     address public pair;
 
-    // ----------- State (AMM Reserves) -----------
     uint256 public virtualTokenReserves;
     uint256 public virtualPCReserves;
     uint256 public realTokenReserves; // Equivalent to tokensMinted
     uint256 public realPCReserves; // Equivalent to totalPCSpent
     bool public graduated;
 
-    // ----------- Events & Errors -----------
     event Bought(address indexed buyer, uint256 pcIn, uint256 tokensOut);
     event Graduated(
         uint256 pcToLP,
@@ -107,7 +92,10 @@ contract PumpFunBondingCurve is Ownable {
         uint256 _tokensToBurn,
         uint256 _feeBps,
         uint256 _initialVirtualTokenReserves,
-        uint256 _initialVirtualPCReserves
+        uint256 _initialVirtualPCReserves,
+        address _router,
+        address _lpLocker,
+        uint256 _lpLockSeconds
     ) {
         _transferOwnership(owner);
         creator = _creator;
@@ -122,28 +110,29 @@ contract PumpFunBondingCurve is Ownable {
         tokensToBurn = _tokensToBurn;
         feeBps = _feeBps;
 
-        // --- Initialize AMM Reserves ---
         virtualTokenReserves = _initialVirtualTokenReserves;
         virtualPCReserves = _initialVirtualPCReserves;
         realTokenReserves = curveSupply; // Start with all curve tokens as real reserves
 
-        // // --- One-Step Launch: Mint and Distribute ---
+        router = IPentaswapV2Router02_payable(_router);
+        lpLocker = _locker;
+        lpLockSeconds = _lockSeconds;
+
         // TOKEN.mint(address(this), _totalSupply);
         // uint256 creatorAmount = (_totalSupply * 20) / 100;
         // TOKEN.transfer(_creator, creatorAmount);
     }
 
-    // ----------- Admin Configuration -----------
-    function setRouterAndLocker(
-        address _router,
-        address _locker,
-        uint256 _lockSeconds
-    ) external onlyOwner {
-        router = IUniswapV2Router02_payable(_router);
-        lpLocker = _locker;
-        lpLockSeconds = _lockSeconds;
-        emit ConfigUpdated(_router, _locker, _lockSeconds);
-    }
+    // function setRouterAndLocker(
+    //     address _router,
+    //     address _locker,
+    //     uint256 _lockSeconds
+    // ) external onlyOwner {
+    //     router = IPentaswapV2Router02_payable(_router);
+    //     lpLocker = _locker;
+    //     lpLockSeconds = _lockSeconds;
+    //     emit ConfigUpdated(_router, _locker, _lockSeconds);
+    // }
 
     function setFeeBps(uint256 newFeeBps) external onlyOwner {
         if (newFeeBps > 1000) revert InvalidAmount();
@@ -151,7 +140,6 @@ contract PumpFunBondingCurve is Ownable {
         emit FeeUpdated(newFeeBps);
     }
 
-    // ----------- Public Buy -----------
     function buy() external payable nonReentrant {
         uint256 pcIn = msg.value;
         if (graduated) revert AlreadyGraduated();
@@ -170,34 +158,75 @@ contract PumpFunBondingCurve is Ownable {
             revert CurveDepleted();
         }
 
-        newSold = currentSold + tokensOut;
-        newPcRaised = currentPcRaised + pcNet;
+        // --- Update Reserves ---
+        virtualPCReserves += pcNet;
+        virtualTokenReserves -= tokensOut;
+        realPCReserves += pcNet;
+        realTokenReserves -= tokensOut;
 
-        return (tokensOut, newSold, newPcRaised, newF);
-    }
+        TOKEN.transfer(msg.sender, tokensOut);
+        emit Bought(msg.sender, pcIn, tokensOut);
 
-    // --- Math Helpers (Cubic Curve) ---
-    function _cost(uint256 f_) internal pure returns (uint256) {
-        uint256 f2_scaled = (f_ * f_) / SCALE;
-        uint256 f3_scaled = (f2_scaled * f_) / SCALE;
-        return (TARGET_PC * f3_scaled) / SCALE;
-    }
-
-    function _fractionAtCost(uint256 C) internal pure returns (uint256) {
-        if (C == 0) return 0;
-        uint256 ratio = (C * SCALE) / TARGET_PC;
-        return _cbrt(ratio);
-    }
-
-    function _cbrt(uint256 x) internal pure returns (uint256) {
-        if (x == 0) return 0;
-        uint256 z = x;
-        uint256 result;
-        for (uint i = 0; i < 100; i++) {
-            result = z;
-            z = (x / (z * z) + 2 * z) / 3;
-            if (z == result) break;
+        if (realPCReserves >= graduationPC) {
+            _graduate();
         }
-        return result;
+    }
+
+    function _graduate() internal {
+        graduated = true;
+        TOKEN.burn(tokensToBurn);
+        uint256 pcForLP = address(this).balance;
+        uint256 tokenForLP = TOKEN.balanceOf(address(this));
+
+        TOKEN.approve(address(router), tokenForLP);
+        (, , uint256 lpAmount) = router.addLiquidityETH{value: pcForLP}(
+            address(TOKEN),
+            tokenForLP,
+            0,
+            0,
+            address(this),
+            block.timestamp
+        );
+
+        address wpc = router.WETH();
+        address _pair = IPentaswapV2Factory(router.factory()).getPair(
+            address(TOKEN),
+            wpc
+        );
+        pair = _pair;
+
+        if (lpLocker != address(0)) {
+            IERC20(_pair).approve(lpLocker, lpAmount);
+            ILPLocker(lpLocker).lock(
+                _pair,
+                lpAmount,
+                block.timestamp + lpLockSeconds,
+                address(0)
+            );
+        } else {
+            IERC20(_pair).transfer(address(0xdead), lpAmount);
+        }
+
+        emit Graduated(pcForLP, tokenForLP, tokensToBurn, _pair);
+    }
+
+    function quoteBuy(uint256 pcIn) external view returns (uint256 tokensOut) {
+        if (graduated || pcIn == 0) return 0;
+        uint256 pcNet = (pcIn * (10_000 - feeBps)) / 10_000;
+        tokensOut = _getTokensForPC(pcNet);
+        return Math.min(tokensOut, realTokenReserves);
+    }
+
+    function _getTokensForPC(uint256 pcAmount) internal view returns (uint256) {
+        if (pcAmount == 0) return 0;
+        // Using 128-bit integers for intermediate calculations to prevent overflow
+        uint256 k = uint256(virtualPCReserves) * uint256(virtualTokenReserves);
+        uint256 newVirtualPCReserves = virtualPCReserves + pcAmount;
+        uint256 newVirtualTokenReserves = k / newVirtualPCReserves;
+
+        // The +1 in the Rust code is a common trick to handle rounding in integer division.
+        // Solidity's integer division truncates, so we don't need it here.
+        // The difference is the amount of tokens out.
+        return virtualTokenReserves - newVirtualTokenReserves;
     }
 }
