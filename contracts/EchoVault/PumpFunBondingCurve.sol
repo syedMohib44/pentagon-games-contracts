@@ -56,9 +56,118 @@ contract PumpFunBondingCurve {
         newF = _fractionAtCost(C1);
         if (newF > SCALE) newF = SCALE;
 
-        tokensOut = (CURVE_SUPPLY * (newF - currentF)) / SCALE;
-        if (currentSold + tokensOut > CURVE_SUPPLY) {
-            tokensOut = CURVE_SUPPLY - currentSold;
+// ============== PumpFunBondingCurve (AMM Math) ==============
+contract PumpFunBondingCurve is Ownable {
+    // ----------- Immutables -----------
+    IEchoVault public immutable TOKEN;
+    address public immutable feeTreasury;
+    address public immutable creator;
+
+    // --- Supply & Graduation Parameters ---
+    uint256 public immutable totalSupply;
+    uint256 public immutable curveSupply;
+    uint256 public immutable graduationPC;
+    uint256 public immutable tokensToBurn;
+
+    // ----------- Mutable Config (Owner-only) -----------
+    uint256 public feeBps;
+    IUniswapV2Router02_payable public router;
+    address public lpLocker;
+    uint256 public lpLockSeconds = 365 days;
+    address public pair;
+
+    // ----------- State (AMM Reserves) -----------
+    uint256 public virtualTokenReserves;
+    uint256 public virtualPCReserves;
+    uint256 public realTokenReserves; // Equivalent to tokensMinted
+    uint256 public realPCReserves; // Equivalent to totalPCSpent
+    bool public graduated;
+
+    // ----------- Events & Errors -----------
+    event Bought(address indexed buyer, uint256 pcIn, uint256 tokensOut);
+    event Graduated(
+        uint256 pcToLP,
+        uint256 tokensToLP,
+        uint256 tokensBurned,
+        address indexed pair
+    );
+    event ConfigUpdated(address router, address locker, uint256 lockSeconds);
+    event FeeUpdated(uint256 newFeeBps);
+    error AlreadyGraduated();
+    error InvalidAmount();
+    error CurveDepleted();
+
+    constructor(
+        address owner,
+        address _creator,
+        address _token,
+        address _feeTreasury,
+        uint256 _totalSupply,
+        uint256 _graduationPC,
+        uint256 _tokensToBurn,
+        uint256 _feeBps,
+        uint256 _initialVirtualTokenReserves,
+        uint256 _initialVirtualPCReserves
+    ) {
+        _transferOwnership(owner);
+        creator = _creator;
+        TOKEN = IEchoVault(_token);
+        feeTreasury = _feeTreasury;
+
+        if (_feeBps > 1000) revert InvalidAmount();
+
+        totalSupply = _totalSupply;
+        curveSupply = (_totalSupply * 60) / 100;
+        graduationPC = _graduationPC;
+        tokensToBurn = _tokensToBurn;
+        feeBps = _feeBps;
+
+        // --- Initialize AMM Reserves ---
+        virtualTokenReserves = _initialVirtualTokenReserves;
+        virtualPCReserves = _initialVirtualPCReserves;
+        realTokenReserves = curveSupply; // Start with all curve tokens as real reserves
+
+        // // --- One-Step Launch: Mint and Distribute ---
+        // TOKEN.mint(address(this), _totalSupply);
+        // uint256 creatorAmount = (_totalSupply * 20) / 100;
+        // TOKEN.transfer(_creator, creatorAmount);
+    }
+
+    // ----------- Admin Configuration -----------
+    function setRouterAndLocker(
+        address _router,
+        address _locker,
+        uint256 _lockSeconds
+    ) external onlyOwner {
+        router = IUniswapV2Router02_payable(_router);
+        lpLocker = _locker;
+        lpLockSeconds = _lockSeconds;
+        emit ConfigUpdated(_router, _locker, _lockSeconds);
+    }
+
+    function setFeeBps(uint256 newFeeBps) external onlyOwner {
+        if (newFeeBps > 1000) revert InvalidAmount();
+        feeBps = newFeeBps;
+        emit FeeUpdated(newFeeBps);
+    }
+
+    // ----------- Public Buy -----------
+    function buy() external payable nonReentrant {
+        uint256 pcIn = msg.value;
+        if (graduated) revert AlreadyGraduated();
+        if (pcIn == 0) revert InvalidAmount();
+
+        uint256 fee = (pcIn * feeBps) / 10_000;
+        if (fee > 0) {
+            payable(feeTreasury).transfer(fee);
+        }
+        uint256 pcNet = pcIn - fee;
+
+        // --- AMM Math: x * y = k ---
+        uint256 tokensOut = _getTokensForPC(pcNet);
+
+        if (tokensOut > realTokenReserves) {
+            revert CurveDepleted();
         }
 
         newSold = currentSold + tokensOut;
