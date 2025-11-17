@@ -3,6 +3,7 @@ const hre = require("hardhat");
 
 async function main() {
   const [addr1] = await hre.ethers.getSigners();
+  
   const gunniesKillerContract = await ethers.getContractFactory("GunniesKiller");
   this.gunniesKillerContract = await gunniesKillerContract.connect(addr1).deploy();
 

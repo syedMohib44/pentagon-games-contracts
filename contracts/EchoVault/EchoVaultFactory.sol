@@ -26,8 +26,8 @@ contract EchoVaultFactory is
 
     address public echoImplementation;
     address public router;
-    address public locker;
-    uint256 public lockSeconds = 600;
+    address public lpLocker;
+    uint256 public lpLockSeconds = 600;
 
     IImplementationApprovalRegistry public implementationApprovalRegistry;
 
@@ -35,7 +35,7 @@ contract EchoVaultFactory is
         address _PROXY_ADMIN,
         address _implementationApprovalRegistry,
         address _router,
-        address _locker
+        address _lpLocker
     ) public initializer {
         __Ownable_init(); // Initializes the Ownable contract
         __UUPSUpgradeable_init(); // Initializes the UUPS upgradeable contract
@@ -43,6 +43,8 @@ contract EchoVaultFactory is
         implementationApprovalRegistry = IImplementationApprovalRegistry(
             _implementationApprovalRegistry
         );
+        router = _router;
+        lpLocker = _lpLocker;
     }
 
     function _authorizeUpgrade(
@@ -87,8 +89,8 @@ contract EchoVaultFactory is
             msg.sender,
             address(implementationApprovalRegistry),
             router,
-            locker,
-            lockSeconds
+            lpLocker,
+            lpLockSeconds
         );
 
         require(
@@ -122,13 +124,12 @@ contract EchoVaultFactory is
 
     function setRouterAndLocker(
         address _router,
-        address _locker,
-        uint256 _lockSeconds
+        address _lpLocker,
+        uint256 _lpLockSeconds
     ) external onlyOwner {
-        router = IPentaswapV2Router02_payable(_router);
-        lpLocker = _locker;
-        lpLockSeconds = _lockSeconds;
-        emit ConfigUpdated(_router, _locker, _lockSeconds);
+        router = _router;
+        lpLocker = _lpLocker;
+        lpLockSeconds = _lpLockSeconds;
     }
 
     function setImplementationApprovalRegistry(

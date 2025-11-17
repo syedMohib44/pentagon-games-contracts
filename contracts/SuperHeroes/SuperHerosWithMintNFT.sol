@@ -1,24 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.0;
 
-import "@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
 import {Freezable} from "../shared/Freezable.sol";
 
-contract Blockchain_Supervillains is ONFT721, Freezable, BasicAccessControl {
+contract Blockchain_Superheroes_ERC721 is ERC721, Freezable, BasicAccessControl {
     event MetadataUpdate(uint256 _tokenId);
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
-    event Highfive(uint256 _tokenId, address _owner);
-    event Deposit(uint256 _tokenId, uint256 _amount, address _owner);
-    event WithdrawDeposit(uint256 _tokenId, uint256 _amount, address _owner);
-    event SunkenPower(uint256 _tokenId, uint256 _amount, address _owner);
 
     address public burnAddress = address(this);
-    uint256 constant START_TOKEN = 1_482_601_649_000_000_000;
-    uint256 public currentToken = START_TOKEN;
-    uint256 _maxCap = 1_482_601_649_000_000_999;
+    uint256 constant START_TOKEN = 10_143_000_000_001;
+    uint256 _maxCap = 10_143_000_002_500;
 
     bool public isTransferable = false;
 
@@ -33,23 +27,17 @@ contract Blockchain_Supervillains is ONFT721, Freezable, BasicAccessControl {
     // mapping for maintaining that how many times a user has worshipped a token
     mapping(address => mapping(uint256 => uint256)) public userHighFiversCount;
 
-    IERC20 public erc20Token;
-
     //variable to store tokenDeposit value
     uint256 public totalTokenDeposit;
 
     receive() external payable {}
 
-    string public _baseTokenURI = "https://api.bcsh.xyz/metadata/musklprime/";
+    string public _baseTokenURI = "https://api.bcsh.xyz/metadata/";
 
     constructor(
-        string memory _name,
-        string memory _symbol,
-        uint256 _minGasToTransfer,
-        address _lzEndpoint
-    ) ONFT721(_name, _symbol, _minGasToTransfer, _lzEndpoint) {
-        erc20Token = IERC20(0x7F73B66d4e6e67bCdeaF277b9962addcDabBFC4d);
-    }
+        string memory name_,
+        string memory symbols_
+    ) ERC721(name_, symbols_) {}
 
     function _baseURI() internal view virtual override returns (string memory) {
         return _baseTokenURI;
@@ -65,18 +53,17 @@ contract Blockchain_Supervillains is ONFT721, Freezable, BasicAccessControl {
         _maxCap = _newCap;
     }
 
-    function setERC20Token(IERC20 _erc20Token) external onlyOwner {
-        erc20Token = _erc20Token;
-    }
-
     function mintNextToken(
-        address _owner
+        address _owner,
+        uint256 _tokenId
     ) external onlyModerators returns (bool) {
-        return mint(_owner);
+        return mint(_owner, _tokenId);
     }
 
-    function mint(address _owner) internal returns (bool) {
-        uint256 _tokenId = currentToken + 1;
+    function mint(
+        address _owner,
+        uint256 _tokenId
+    ) internal onlyModerators returns (bool) {
         require(_owner != address(0), "ERC721: mint to the zero address");
         require(!_exists(_tokenId), "ERC721: token already minted");
         require(
@@ -85,36 +72,29 @@ contract Blockchain_Supervillains is ONFT721, Freezable, BasicAccessControl {
         );
 
         _safeMint(_owner, _tokenId);
-        currentToken = _tokenId;
 
         return true;
     }
 
     // function to handle deposits of eth for token ids . Only owner of token can deposit eth
-    function depositFund(uint256 _tokenId, uint256 _amount) external {
+    function depositFund(uint256 _tokenId) external payable {
         require(
             ownerOf(_tokenId) == msg.sender,
             "You are not the owner of this token"
         );
-        tokenDeposits[_tokenId] += _amount;
-        totalTokenDeposit += _amount;
-        erc20Token.transferFrom(address(msg.sender), address(this), _amount);
-
-        emit Deposit(_tokenId, _amount, msg.sender);
+        tokenDeposits[_tokenId] += msg.value;
+        totalTokenDeposit += msg.value;
     }
 
-    function sunkenPower(uint256 _tokenId, uint256 _amount) external {
+    function SunkenPower(uint256 _tokenId) external payable {
         require(
             ownerOf(_tokenId) == msg.sender,
             "You are not the owner of this token"
         );
-        require(
-            burnAddress != address(0),
-            "Burn Address cannot be null address"
-        );
-        tokenBurns[_tokenId] += _amount;
-        erc20Token.transferFrom(address(msg.sender), burnAddress, _amount);
-        emit SunkenPower(_tokenId, _amount, msg.sender);
+        (bool success, ) = burnAddress.call{value: msg.value}("");
+        require(success, "Failed to burn ETH");
+
+        tokenBurns[_tokenId] += msg.value;
     }
 
     function toggleIsTransferable() public onlyOwner {
@@ -146,6 +126,7 @@ contract Blockchain_Supervillains is ONFT721, Freezable, BasicAccessControl {
         emit Unfrozen(_account);
     }
 
+    // function to withdraw eth from token deposits
     function withdrawTokenDeposit(uint256 _tokenId, uint256 _amount) external {
         require(
             ownerOf(_tokenId) == msg.sender,
@@ -154,9 +135,7 @@ contract Blockchain_Supervillains is ONFT721, Freezable, BasicAccessControl {
         require(tokenDeposits[_tokenId] >= _amount, "Insufficient balance");
         tokenDeposits[_tokenId] -= _amount;
         totalTokenDeposit -= _amount;
-
-        erc20Token.transfer(msg.sender, _amount);
-        emit WithdrawDeposit(_tokenId, _amount, msg.sender);
+        payable(msg.sender).transfer(_amount);
     }
 
     function updateBurnAddress(address _burnAddress) external onlyOwner {
@@ -176,24 +155,11 @@ contract Blockchain_Supervillains is ONFT721, Freezable, BasicAccessControl {
         payable(msg.sender).transfer(address(this).balance - totalTokenDeposit);
     }
 
-    function ownerWithdrawERC20(IERC20 _token) external onlyOwner {
-        require(
-            _token.balanceOf(address(this)) > totalTokenDeposit,
-            "No withdrawl for owner"
-        );
-        bool success = IERC20(_token).transfer(
-            msg.sender,
-            _token.balanceOf(address(this)) - totalTokenDeposit
-        );
-        require(success == true, "failed transfer");
-    }
-
     // function to HighFive a token
     function highFiveToken(uint256 _tokenId) external {
         require(_exists(_tokenId), "Token does not exist");
         tokenHighFiversCount[_tokenId] += 1;
         tokenHighFivers[_tokenId].push(msg.sender);
         userHighFiversCount[msg.sender][_tokenId] += 1;
-        emit Highfive(_tokenId, msg.sender);
     }
 }

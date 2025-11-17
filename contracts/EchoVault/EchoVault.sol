@@ -5,7 +5,7 @@ pragma solidity >=0.8.2;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "../shared/BasicUpgradeableAccessControl.sol";
 import "../shared/Freezable.sol";
@@ -20,6 +20,7 @@ interface IImplementationApprovalRegistry {
 contract EchoVault is
     Initializable,
     ERC20Upgradeable,
+    ERC20BurnableUpgradeable,
     UUPSUpgradeable,
     BasicUpgradeableAccessControl,
     Freezable
@@ -49,9 +50,6 @@ contract EchoVault is
         uint256 amount
     );
     event Follow(address friend, address owner, uint256 amount);
-
-    mapping(address => bool) public transferable;
-    bool public isTransferable = false;
 
     uint256 public constant MAX_SUPPLY = 100_000_000 * 1e18;
     uint256 public constant OWNER_SHARE = (MAX_SUPPLY * 20) / 100; // 20%
@@ -83,6 +81,10 @@ contract EchoVault is
     PumpFunBondingCurve public pumpfun;
     IImplementationApprovalRegistry public implementationApprovalRegistry;
 
+    mapping(address => uint256) public followTimestamps;
+
+    // CAUTION: Always put new variables above construtor to avoid changes to existing global variables.
+
     constructor() {
         _disableInitializers(); // Required for upgradeable contracts
     }
@@ -99,26 +101,35 @@ contract EchoVault is
         __ERC20_init(_name, _symbol);
         __UUPSUpgradeable_init();
         __Ownable_init();
+        __ERC20Burnable_init();
 
         _mint(address(this), MAX_SUPPLY);
         _transfer(address(this), _owner, OWNER_SHARE);
 
         //Initialize Bonding Cuver here
+        //TODO: Have to set it 250 PC for prod
+        uint256 GRADUATION_PC_TEST = 0.1 ether; // 0.1 PC
+        uint256 INITIAL_PC_RESERVES_TEST = 0.01 ether; // 10% of the goal
+
+        //TODO: Set it to 0 also check why its there in the first place
+        uint256 TOKENS_TO_BURN_TEST = 930233 ether; // A more proportional burn amount
+
         pumpfun = new PumpFunBondingCurve(
             _owner,
             _owner,
             address(this),
             DEV_ADDRESS,
             MAX_SUPPLY,
-            250000000000000000000,
-            930233000000000000000000,
-            300,
-            500000000000000000000000000,
-            1000000000000000000,
+            GRADUATION_PC_TEST, // Using the clear constant for 0.1 PC
+            TOKENS_TO_BURN_TEST, // Using a clear constant
+            300, // feeBps
+            BONDING_CURVE_SHARE, // Correct: Matches the actual curve supply
+            INITIAL_PC_RESERVES_TEST, // Using the clear constant for 0.01 PC
             _router,
             _lpLocker,
             _lpLockSeconds
         );
+
         _transfer(address(this), address(pumpfun), BONDING_CURVE_SHARE);
         // if (msg.value == 0) {
         //     _transfer(address(this), DEV_ADDRESS, DEV_SHARE);
@@ -175,7 +186,9 @@ contract EchoVault is
 
         if (friendRequests[_friend] == FriendRequest.REQUEST) {
             friendCount++;
-            _transfer(address(this), _friend, FRIEND_AMOUNT);
+            if (balanceOf(address(this)) >= FRIEND_AMOUNT) {
+                _transfer(address(this), _friend, FRIEND_AMOUNT);
+            }
             emit Request(
                 FriendRequest.FRIEND,
                 _friend,
@@ -253,6 +266,7 @@ contract EchoVault is
         }
         isFollower[msg.sender] = true;
         followRequests[msg.sender] = FollowRequest.FOLLOW;
+        followTimestamps[msg.sender] = block.timestamp;
     }
 
     function unFollowUser() external {
@@ -265,6 +279,12 @@ contract EchoVault is
 
         require(isFollower[msg.sender], "Not a follower");
         require(msg.sender != owner(), "Cannot unfollow to ownself");
+
+        uint256 followedAt = followTimestamps[msg.sender];
+        require(
+            block.timestamp >= followedAt + 7 days,
+            "Cannot unfollow within 7 days of following"
+        );
 
         isFollower[msg.sender] = false;
         // token.disperse(msg.sender, FOLLOWER_AMOUNT);

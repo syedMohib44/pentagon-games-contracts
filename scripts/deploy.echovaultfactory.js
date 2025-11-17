@@ -13,12 +13,13 @@ async function main() {
 
   const EchoVaultFactory = await ethers.getContractFactory("EchoVaultFactory");
   this.EchoVaultFactory = await EchoVaultFactory.connect(addr1).deploy();
-  await this.EchoVaultFactory.waitForDeployment(); 
+  await this.EchoVaultFactory.waitForDeployment();
 
   console.log("EchoVaultFactory deployed to:", this.EchoVaultFactory.target);
 
   // ProxyAdmin, ImplementationApprovalRegistry, PentaswapV2Router02, lpLocker
-  const initData = this.EchoVaultFactory.interface.encodeFunctionData("initialize", ["0xB4327d38578971387e3b1F4EFD178B561380B395", "0x8050A13177c0e0De3ac62B61C38110F7f0cfBFc7", "0x60b70E46178CEf34E71B61BDE2E79bbB7bA41706", "0x0000000000000000000000000000000000000000"]);
+  const initData = this.EchoVaultFactory.interface.encodeFunctionData("initialize", ["0xc2C031280E02146Cac5CbBFf725f90deB2D7c98d", "0x14ee10ae6A0bE3f18012064BDBF8DA3b90146f6E", "0x60b70E46178CEf34E71B61BDE2E79bbB7bA41706", "0x0000000000000000000000000000000000000000"]);
+  console.log("Generated initData:", initData);
 
   const EchoVaultFactoryProxy = await ethers.getContractFactory("EchoVaultFactoryProxy");
   this.EchoVaultFactoryProxy = await EchoVaultFactoryProxy.connect(addr1).deploy(this.EchoVaultFactory.target, this.EchoVaultFactoryProxyAdmin.target, initData);

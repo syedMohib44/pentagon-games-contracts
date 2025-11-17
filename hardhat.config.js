@@ -10,10 +10,15 @@ module.exports = {
       {
         version: "0.8.22",
         settings: {
+          metadata: {
+            bytecodeHash: "none", // disable ipfs
+            useLiteralContent: true, // use source code
+          },
           optimizer: {
             enabled: true,
             runs: 200,
           },
+          viaIR: true
         },
       }
     ],
@@ -42,6 +47,10 @@ module.exports = {
       url: `https://bsc-dataseed.binance.org/`,
       accounts: [PRIVATE_KEY]
     },
+    monadtestnet: {
+      url: "https://testnet-rpc.monad.xyz",
+      accounts: [PRIVATE_KEY]
+    },
     pentestnet: {
       url: `https://rpc-testnet.pentagon.games`,
       accounts: [PRIVATE_KEY],
@@ -68,9 +77,7 @@ module.exports = {
     },
     nebula: {
       url: `https://mainnet-proxy.skalenodes.com/v1/green-giddy-denebola`,
-      accounts: [PRIVATE_KEY],
-      gas: 21000000,
-      gasPrice: 3000000000000, // Adjust as necessary
+      accounts: [PRIVATE_KEY]
     },
     arbitrumOne: {
       url: 'https://arb1.arbitrum.io/rpc',
@@ -83,7 +90,7 @@ module.exports = {
     polygonamoy: {
       url: `https://rpc-amoy.polygon.technology`,
       accounts: [PRIVATE_KEY],
-      gasPrice: 30000000000 
+      gasPrice: 30000000000
     },
     avax: {
       url: `https://api.avax.network/ext/bc/C/rpc`,
@@ -91,11 +98,13 @@ module.exports = {
     }
   },
   etherscan: {
+  enabled: true,
     apiKey: {
       mainnet: process.env.ETH_API_KEY,
       coretestnet: process.env.CORE_TESTNET_API_KEY,
+      monadtestnet: process.env.ETH_API_KEY,
       core: process.env.CORE_API_KEY,
-      polygonamoy: process.env.AMOY_API_KEY,
+      polygonamoy: process.env.ETH_API_KEY,
       arbitrumOne: process.env.ARB_API_KEY,
       polygon: process.env.AMOY_API_KEY,
       bsc: process.env.BNB_API_KEY,
@@ -122,14 +131,14 @@ module.exports = {
           browserURL: "https://scan.coredao.org/"
         }
       },
-      {
-        network: "nebula",
-        chainId: 37084624,
-        urls: {
-          apiURL: "https://internal.explorer.testnet.skalenodes.com:10001/api/",
-          browserURL: "https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/"
-        }
-      },
+      // {
+      //   network: "nebula",
+      //   chainId: 37084624,
+      //   urls: {
+      //     apiURL: "https://internal.explorer.testnet.skalenodes.com:10001/api/",
+      //     browserURL: "https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/"
+      //   }
+      // },
       {
         network: "chainverse",
         chainId: 5555,
@@ -138,11 +147,20 @@ module.exports = {
           browserURL: "https://explorer.chainverse.info/"
         }
       },
+      // {
+      //   network: "monadtestnet",
+      //   chainId: 10143,
+      //   urls: {
+      //     apiURL: "https://testnet.monadscan.com/api", 
+      //     browserURL: "https://testnet.monadscan.com"
+      //   }
+      // },
       {
         network: "nebula",
         chainId: 1482601649,
-        urls:{
-          apiURL: "https://internal-hubs.explorer.mainnet.skalenodes.com:10011/api/",
+        urls: {
+          // Correct public API URL
+          apiURL: "https://green-giddy-denebola.explorer.mainnet.skalenodes.com/api",
           browserURL: "https://green-giddy-denebola.explorer.mainnet.skalenodes.com/"
         }
       },
@@ -182,11 +200,16 @@ module.exports = {
         network: "polygonamoy",
         chainId: 80002,
         urls: {
-          apiURL: "https://api-amoy.polygonscan.com/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainid=80002",
           browserURL: "https://amoy.polygonscan.com/"
         }
       }
     ]
-  }
+  },
+  sourcify: {
+    enabled: false,
+    apiUrl: "https://sourcify-api-monad.blockvision.org",
+    browserUrl: "https://testnet.monadexplorer.com",
+  },
 
 };

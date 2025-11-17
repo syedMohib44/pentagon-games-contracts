@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
 import {Freezable} from "../shared/Freezable.sol";
 
-contract Blockchain_Supervillains is ONFT721, Freezable, BasicAccessControl {
+contract Blockchain_Supervillains_1 is ONFT721, Freezable, BasicAccessControl {
     event MetadataUpdate(uint256 _tokenId);
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 

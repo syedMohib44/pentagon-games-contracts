@@ -19,13 +19,13 @@ contract BCSV_Distributor is BasicAccessControl {
         erc20Token = IERC20(_erc20Token);
     }
 
-    uint256 public mintingCount = 37_084_624_000_000_000;
-    uint256 public mintingCap = 37_084_624_000_002_500;
+    uint256 public mintingCount = 1_482_601_649_000_000_000;
+    uint256 public mintingCap = 1_482_601_649_000_000_999;
 
     uint256 decimal = 18;
 
     uint256 public nativePriceNFT = 10 * 10 ** decimal;
-    uint256 public erc20PriceNFT = 888 * (10 ** 18);
+    uint256 public erc20PriceNFT = 2666 * (10 ** 18);
 
     bool public _mintingPausedNative = false;
     bool public _mintingPausedERC20 = true;
@@ -62,7 +62,7 @@ contract BCSV_Distributor is BasicAccessControl {
         mintingCount = blockchainSuperherosContract.currentToken() + 1;
 
         require(!_mintingPausedERC20, "Minting paused");
-        require(mintingCount < mintingCap, "Max cap reached");
+        require(mintingCount <= mintingCap, "Max cap reached");
         require(
             _amount == erc20PriceNFT,
             "Provided amount is invalid or wallet out of funds"

@@ -16,9 +16,9 @@ interface IEchoVault is IERC20 {
 interface IPentaswapV2Router02_payable {
     function factory() external pure returns (address);
 
-    function WETH() external pure returns (address);
+    function WPEN() external pure returns (address);
 
-    function addLiquidityETH(
+    function addLiquidityPEN(
         address token,
         uint amountTokenDesired,
         uint amountTokenMin,
@@ -115,8 +115,8 @@ contract PumpFunBondingCurve is Ownable, ReentrancyGuard {
         realTokenReserves = curveSupply; // Start with all curve tokens as real reserves
 
         router = IPentaswapV2Router02_payable(_router);
-        lpLocker = _locker;
-        lpLockSeconds = _lockSeconds;
+        lpLocker = _lpLocker;
+        lpLockSeconds = _lpLockSeconds;
 
         // TOKEN.mint(address(this), _totalSupply);
         // uint256 creatorAmount = (_totalSupply * 20) / 100;
@@ -179,7 +179,7 @@ contract PumpFunBondingCurve is Ownable, ReentrancyGuard {
         uint256 tokenForLP = TOKEN.balanceOf(address(this));
 
         TOKEN.approve(address(router), tokenForLP);
-        (, , uint256 lpAmount) = router.addLiquidityETH{value: pcForLP}(
+        (, , uint256 lpAmount) = router.addLiquidityPEN{value: pcForLP}(
             address(TOKEN),
             tokenForLP,
             0,
@@ -188,7 +188,7 @@ contract PumpFunBondingCurve is Ownable, ReentrancyGuard {
             block.timestamp
         );
 
-        address wpc = router.WETH();
+        address wpc = router.WPEN();
         address _pair = IPentaswapV2Factory(router.factory()).getPair(
             address(TOKEN),
             wpc
