@@ -5,10 +5,10 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../shared/BasicUpgradeableAccessControl.sol";
-import "./EchoVaultProxy.sol";
-import "./EchoVault.sol";
+import "./EmotiCoinProxy.sol";
+import "./EmotiCoin.sol";
 
-contract EchoVaultFactory is
+contract EmotiCoinFactory is
     Initializable,
     UUPSUpgradeable,
     BasicUpgradeableAccessControl
@@ -22,9 +22,9 @@ contract EchoVaultFactory is
     mapping(string => address) public usersSymbol;
     mapping(string => address) public usersName;
 
-    uint256 public fee = 10 * (10 ** 18);
+    uint256 public fee = 1 * (10 ** 17);
 
-    address public echoImplementation;
+    address public emotiImplementation;
     address public router;
     address public lpLocker;
     uint256 public lpLockSeconds = 600;
@@ -51,9 +51,7 @@ contract EchoVaultFactory is
         address newImplementation
     ) internal override onlyOwner {}
 
-    /**
-     *  TOOD: Make Name and Symbol unique
-     */
+
     function registerToken(
         string memory _name,
         string memory _symbol
@@ -95,14 +93,14 @@ contract EchoVaultFactory is
 
         require(
             implementationApprovalRegistry.approvedImplementation(
-                echoImplementation
+                emotiImplementation
             ),
             "Implementation not approved"
         );
 
         // Deploy the proxy
-        EchoVaultProxy proxy = new EchoVaultProxy(
-            echoImplementation, // your deployed EchoVault logic contract
+        EmotiCoinProxy proxy = new EmotiCoinProxy(
+            emotiImplementation, // your deployed EmotiCoin logic contract
             PROXY_ADMIN, // proxy admin (could be the factory, or a multisig)
             data // call initialize()
         );
@@ -118,8 +116,8 @@ contract EchoVaultFactory is
         fee = _fee;
     }
 
-    function setImplementation(address _echoImplementation) external onlyOwner {
-        echoImplementation = _echoImplementation;
+    function setImplementation(address _emotiImplementation) external onlyOwner {
+        emotiImplementation = _emotiImplementation;
     }
 
     function setRouterAndLocker(

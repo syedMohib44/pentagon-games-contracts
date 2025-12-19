@@ -11,8 +11,8 @@ contract Blockchain_Superheroes_ERC721 is ERC721, Freezable, BasicAccessControl 
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 
     address public burnAddress = address(this);
-    uint256 constant START_TOKEN = 10_143_000_000_001;
-    uint256 _maxCap = 10_143_000_002_500;
+    uint256 constant START_TOKEN = 143_000_000_001;
+    uint256 _maxCap = 143_000_002_500;
 
     bool public isTransferable = false;
 

@@ -14,10 +14,10 @@ contract BCSH_Distributor is BasicAccessControl {
         blockchainSuperheroes = _blockchainSuperheroes;
     }
 
-    uint256 public mintingCount = 10_143_000_000_000;
-    uint256 public mintingCap = 10_143_000_002_500; //  end token id
+    uint256 public mintingCount = 143_000_000_000;
+    uint256 public mintingCap = 143_000_002_500; //  end token id
 
-    uint256 public tokenPrice = 10000 * (10 ** 18);
+    uint256 public tokenPrice = 100 * (10 ** 18);
 
     bool public _mintingPaused = false;
 

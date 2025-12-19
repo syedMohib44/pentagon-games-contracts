@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
-interface IEchoVault is IERC20 {
+interface IEmotiCoin is IERC20 {
     function burn(uint256 amount) external;
 }
 
@@ -47,8 +47,8 @@ interface ILPLocker {
     ) external;
 }
 
-contract PumpFunBondingCurve is Ownable, ReentrancyGuard {
-    IEchoVault public immutable TOKEN;
+contract EmotiCoinCurve is Ownable, ReentrancyGuard {
+    IEmotiCoin public immutable TOKEN;
     address public immutable feeTreasury;
     address public immutable creator;
 
@@ -99,7 +99,7 @@ contract PumpFunBondingCurve is Ownable, ReentrancyGuard {
     ) {
         _transferOwnership(owner);
         creator = _creator;
-        TOKEN = IEchoVault(_token);
+        TOKEN = IEmotiCoin(_token);
         feeTreasury = _feeTreasury;
 
         if (_feeBps > 1000) revert InvalidAmount();
@@ -117,22 +117,7 @@ contract PumpFunBondingCurve is Ownable, ReentrancyGuard {
         router = IPentaswapV2Router02_payable(_router);
         lpLocker = _lpLocker;
         lpLockSeconds = _lpLockSeconds;
-
-        // TOKEN.mint(address(this), _totalSupply);
-        // uint256 creatorAmount = (_totalSupply * 20) / 100;
-        // TOKEN.transfer(_creator, creatorAmount);
     }
-
-    // function setRouterAndLocker(
-    //     address _router,
-    //     address _locker,
-    //     uint256 _lockSeconds
-    // ) external onlyOwner {
-    //     router = IPentaswapV2Router02_payable(_router);
-    //     lpLocker = _locker;
-    //     lpLockSeconds = _lockSeconds;
-    //     emit ConfigUpdated(_router, _locker, _lockSeconds);
-    // }
 
     function setFeeBps(uint256 newFeeBps) external onlyOwner {
         if (newFeeBps > 1000) revert InvalidAmount();

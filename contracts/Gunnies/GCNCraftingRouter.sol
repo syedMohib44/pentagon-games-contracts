@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
 
-// Interfaces for interacting with the other contracts
 interface GCNShards {
     function mint(address to, uint256 designId, uint256 amount) external;
 
@@ -33,27 +32,20 @@ interface IGCN721Main {
     function ownerOf(uint256 tokenId) external view returns (address);
 }
 
-/**
- * @title GCNCraftingRouter
- * @dev The central orchestrator for crafting and uncrafting NFTs.
- */
 contract GCNCraftingRouter is BasicAccessControl, EIP712 {
-    // --- Constants ---
-    uint256 public constant SHARDS_PER_CHROMIUM = 100;
-    uint256 public constant SHARDS_PER_GOLD = 10;
-    uint256 public constant UNCRAFT_RETURN_CHROMIUM = 80;
-    uint256 public constant UNCRAFT_RETURN_GOLD = 800;
+    uint256 public SHARDS_PER_CHROMIUM = 100;
+    uint256 public SHARDS_PER_GOLD = 1000;
+    uint256 public UNCRAFT_RETURN_CHROMIUM = 80;
+    uint256 public UNCRAFT_RETURN_GOLD = 800;
     uint8 public constant TIER_CHROMIUM = 2;
     uint8 public constant TIER_GOLD = 3;
 
-    // --- State Variables ---
     GCNShards public immutable gcnShards;
     IGCN721Main public immutable gcn721Main;
-    IERC20 public feeToken; // The $PC token
+    IERC20 public feeToken;
 
-    mapping(uint8 => uint256) public craftingFee; // tier => fee amount
+    mapping(uint8 => uint256) public craftingFee;
 
-    // --- Events ---
     event NFTUncrafted(
         address indexed owner,
         uint16 designId,
@@ -70,13 +62,9 @@ contract GCNCraftingRouter is BasicAccessControl, EIP712 {
         feeToken = IERC20(_feeTokenAddress);
     }
 
-    // --- Admin Functions ---
-
     function setCraftingFee(uint8 tier, uint256 fee) external onlyOwner {
         craftingFee[tier] = fee;
     }
-
-    // --- Crafting Logic ---
 
     function craftChromium(uint16 designId) external {
         require(
@@ -84,7 +72,6 @@ contract GCNCraftingRouter is BasicAccessControl, EIP712 {
             "Insufficient shards"
         );
 
-        // _chargeFee(TIER_CHROMIUM);
         gcnShards.burn(msg.sender, designId, SHARDS_PER_CHROMIUM);
         gcn721Main.mintTo(msg.sender, designId, TIER_CHROMIUM);
     }
@@ -95,12 +82,9 @@ contract GCNCraftingRouter is BasicAccessControl, EIP712 {
             "Insufficient shards"
         );
 
-        // _chargeFee(TIER_GOLD);
         gcnShards.burn(msg.sender, designId, SHARDS_PER_GOLD);
         gcn721Main.mintTo(msg.sender, designId, TIER_GOLD);
     }
-
-    // --- Uncrafting Logic ---
 
     function uncraft(uint256 tokenId) external {
         require(gcn721Main.ownerOf(tokenId) == msg.sender, "Not owner");
@@ -123,7 +107,17 @@ contract GCNCraftingRouter is BasicAccessControl, EIP712 {
         emit NFTUncrafted(msg.sender, designId, shardsToReturn);
     }
 
-    // --- Internal Helper ---
+    function changePer(
+        uint256 _SHARDS_PER_CHROMIUM,
+        uint256 _SHARDS_PER_GOLD,
+        uint256 _UNCRAFT_RETURN_CHROMIUM,
+        uint256 _UNCRAFT_RETURN_GOLD
+    ) external onlyOwner {
+        SHARDS_PER_CHROMIUM = _SHARDS_PER_CHROMIUM;
+        SHARDS_PER_GOLD = _SHARDS_PER_GOLD;
+        UNCRAFT_RETURN_CHROMIUM = _UNCRAFT_RETURN_CHROMIUM;
+        UNCRAFT_RETURN_GOLD = _UNCRAFT_RETURN_GOLD;
+    }
 
     function _chargeFee(uint8 tier) internal {
         uint256 fee = craftingFee[tier];

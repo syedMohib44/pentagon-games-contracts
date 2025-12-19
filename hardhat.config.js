@@ -12,7 +12,7 @@ module.exports = {
         settings: {
           metadata: {
             bytecodeHash: "none", // disable ipfs
-            useLiteralContent: true, // use source code
+            // useLiteralContent: true, // use source code
           },
           optimizer: {
             enabled: true,
@@ -50,6 +50,11 @@ module.exports = {
     monadtestnet: {
       url: "https://testnet-rpc.monad.xyz",
       accounts: [PRIVATE_KEY]
+    },
+    monad: {
+      url: "https://rpc.monad.xyz",
+      accounts: [PRIVATE_KEY],
+      chainId: 143,
     },
     pentestnet: {
       url: `https://rpc-testnet.pentagon.games`,
@@ -98,11 +103,11 @@ module.exports = {
     }
   },
   etherscan: {
-  enabled: true,
     apiKey: {
-      mainnet: process.env.ETH_API_KEY,
+      eth: process.env.ETH_API_KEY,
       coretestnet: process.env.CORE_TESTNET_API_KEY,
       monadtestnet: process.env.ETH_API_KEY,
+      monad: process.env.ETH_API_KEY,
       core: process.env.CORE_API_KEY,
       polygonamoy: process.env.ETH_API_KEY,
       arbitrumOne: process.env.ARB_API_KEY,
@@ -115,6 +120,14 @@ module.exports = {
       nebula: 'nebula'
     },
     customChains: [
+      {
+        network: "eth",
+        chainId: 1,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api?chainid=1",
+          browserURL: "https://etherscan.io"
+        }
+      },
       {
         network: "coretestnet",
         chainId: 1115,
@@ -155,6 +168,14 @@ module.exports = {
       //     browserURL: "https://testnet.monadscan.com"
       //   }
       // },
+      {
+        network: "monad",
+        chainId: 143,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api?chainid=143",
+          browserURL: "https://monadscan.com",
+        },
+      },
       {
         network: "nebula",
         chainId: 1482601649,
@@ -209,7 +230,8 @@ module.exports = {
   sourcify: {
     enabled: false,
     apiUrl: "https://sourcify-api-monad.blockvision.org",
-    browserUrl: "https://testnet.monadexplorer.com",
+    // browserUrl: "https://testnet.monadexplorer.com",
+    browserUrl: "https://monadvision.com",
   },
 
 };

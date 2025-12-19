@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
 async function main() {
-  NFT_NAME = "BlockchainSuperheros"
+  NFT_NAME = "BlockchainSuperheroes"
   NFT_SYMBOL = "BCSH"
   const [addr1] = await hre.ethers.getSigners();
 

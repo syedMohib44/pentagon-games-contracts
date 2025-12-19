@@ -15,9 +15,8 @@ interface IDistributor {
     /**
      * @notice Mints a new item to a user.
      * @param to The address of the recipient.
-     * @param id The specific token ID or item ID to mint.
      */
-    function mint(address to, uint256 id) external;
+    function mintTo(address to) external;
 }
 
 /**
@@ -33,7 +32,7 @@ interface IDistributor {
  *
  * Admin must first configure prices and SKU types using:
  * - `setPrice(skuId, tokenAddress, price)`
- * - `setSkuConfig(skuId, mintType, distributor, directMintId)`
+ * - `setSkuConfig(skuId, mintType, distributor)`
  */
 contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
     //=================================================
@@ -44,7 +43,11 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
      * @notice Emitted when a payment is successfully received.
      * This is the primary event the backend listener must track.
      */
-    event PaymentReceived(string indexed skuId, address indexed buyer);
+    event PaymentReceived(
+        uint256 indexed skuId,
+        address indexed buyer,
+        bool indexed minted
+    );
 
     /**
      * @notice Emitted when a direct, same-chain mint attempt fails.
@@ -52,24 +55,22 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
      * The payment is still considered successful, and PaymentReceived is still emitted.
      */
     event DirectMintFailed(
-        string indexed skuId,
+        uint256 indexed skuId,
         address indexed buyer,
-        address distributor,
-        uint256 directMintId
+        address distributor
     );
 
     event DirectMintSuccessful(
-        string indexed skuId,
+        uint256 indexed skuId,
         address indexed buyer,
-        address distributor,
-        uint256 directMintId
+        address distributor
     );
 
     /**
      * @notice Emitted when an admin sets a price for a SKU.
      */
     event SkuPriceSet(
-        string indexed skuId,
+        uint256 indexed skuId,
         address indexed token,
         uint256 price
     );
@@ -78,10 +79,9 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
      * @notice Emitted when an admin configures a SKU's fulfillment logic.
      */
     event SkuConfigSet(
-        string indexed skuId,
+        uint256 indexed skuId,
         MintType mintType,
-        address distributor,
-        uint256 directMintId
+        address distributor
     );
 
     //=================================================
@@ -109,7 +109,6 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
     struct SkuConfig {
         MintType mintType; // BACKEND or DIRECT
         address distributor; // Address of the DistributorMint contract (if DIRECT)
-        uint256 directMintId; // The ID to pass to the distributor (if DIRECT)
     }
 
     //=================================================
@@ -117,17 +116,17 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
     //=================================================
 
     /**
-     * @dev Maps a SKU ID (string) to its fulfillment configuration.
+     * @dev Maps a SKU ID (uint256) to its fulfillment configuration.
      * e.g., "CORE_HERO" -> { mintType: DIRECT, distributor: 0x... }
      */
-    mapping(string => SkuConfig) public skuConfigs;
+    mapping(uint256 => SkuConfig) public skuConfigs;
 
     /**
      * @dev Maps (SKU ID => Token Address) to its static price.
      * e.g., ("CORE_HERO", 0xUSDC...) -> 15_000_000 (for 15 USDC with 6 decimals)
      * e.g., ("CORE_HERO", NATIVE_TOKEN) -> 0.008 ether
      */
-    mapping(string => mapping(address => uint256)) public prices;
+    mapping(uint256 => mapping(address => uint256)) public prices;
 
     constructor() {}
 
@@ -139,7 +138,7 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
      * (e.g., wei for native, 1e6 for 6-decimal USDC)
      */
     function setPrice(
-        string calldata skuId,
+        uint256 skuId,
         address token,
         uint256 price
     ) external onlyOwner {
@@ -152,13 +151,11 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
      * @param skuId The SKU identifier
      * @param mintType 0 for BACKEND, 1 for DIRECT
      * @param distributor The address of the DistributorMint contract (if DIRECT)
-     * @param directMintId The token ID or item ID to pass to the distributor (if DIRECT)
      */
     function setSkuConfig(
-        string calldata skuId,
+        uint256 skuId,
         MintType mintType,
-        address distributor,
-        uint256 directMintId
+        address distributor
     ) external onlyOwner {
         if (mintType == MintType.DIRECT) {
             require(
@@ -169,10 +166,9 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
 
         skuConfigs[skuId] = SkuConfig({
             mintType: mintType,
-            distributor: distributor,
-            directMintId: directMintId
+            distributor: distributor
         });
-        emit SkuConfigSet(skuId, mintType, distributor, directMintId);
+        emit SkuConfigSet(skuId, mintType, distributor);
     }
 
     //=================================================
@@ -183,9 +179,7 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
      * @notice Purchase an item using the native chain token (ETH, CORE, etc.)
      * @param skuId The SKU identifier to purchase
      */
-    function purchaseWithNative(
-        string calldata skuId
-    ) external payable nonReentrant {
+    function purchaseWithNative(uint256 skuId) external payable nonReentrant {
         uint256 price = prices[skuId][NATIVE_TOKEN];
 
         require(price > 0, "SKU not for sale in native token");
@@ -200,7 +194,7 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
      * @param tokenAddress The address of the ERC20 token being used
      */
     function purchaseWithToken(
-        string calldata skuId,
+        uint256 skuId,
         address tokenAddress
     ) external nonReentrant {
         require(
@@ -231,11 +225,11 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
      * @notice Internal function to handle fulfillment after payment is confirmed.
      * This is the core logic that emits the event and attempts a direct mint.
      */
-    function _processPayment(string calldata skuId, address buyer) internal {
+    function _processPayment(uint256 skuId, address buyer) internal {
         // 1. **Emit the event for the backend.**
         // This is the most critical step, as it allows the backend to work
         // regardless of whether the direct mint succeeds or fails.
-        emit PaymentReceived(skuId, buyer);
+        bool minted = false;
 
         // 2. **Check for same-chain (DIRECT) mint.**
         SkuConfig storage config = skuConfigs[skuId];
@@ -245,29 +239,17 @@ contract PaymentProcessor is BasicAccessControl, ReentrancyGuard {
             // We use a try/catch block to ensure the transaction does NOT revert
             // if the direct mint fails. We still want the PaymentReceived
             // event to be logged for the backend.
-            try
-                IDistributor(config.distributor).mint(
-                    buyer,
-                    config.directMintId
-                )
-            {
-                emit DirectMintSuccessful(
-                    skuId,
-                    buyer,
-                    config.distributor,
-                    config.directMintId
-                );
+            try IDistributor(config.distributor).mintTo(buyer) {
+                minted = true;
+                emit DirectMintSuccessful(skuId, buyer, config.distributor);
             } catch {
                 // Direct mint failed. Emit a failure event for monitoring.
                 // The backend can see this and decide to retry or flag for review.
-                emit DirectMintFailed(
-                    skuId,
-                    buyer,
-                    config.distributor,
-                    config.directMintId
-                );
+                emit DirectMintFailed(skuId, buyer, config.distributor);
             }
         }
+
+        emit PaymentReceived(skuId, buyer, minted);
     }
 
     //=================================================

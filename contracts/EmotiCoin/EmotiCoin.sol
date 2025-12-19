@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20Burnable
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "../shared/BasicUpgradeableAccessControl.sol";
 import "../shared/Freezable.sol";
-import "./PumpFunBondingCurve.sol";
+import "./EmotiCoinCurve.sol";
 
 interface IImplementationApprovalRegistry {
     function approvedImplementation(
@@ -17,7 +17,7 @@ interface IImplementationApprovalRegistry {
     ) external view returns (bool);
 }
 
-contract EchoVault is
+contract EmotiCoin is
     Initializable,
     ERC20Upgradeable,
     ERC20BurnableUpgradeable,
@@ -78,7 +78,7 @@ contract EchoVault is
     uint256 public followerCount;
     uint256 public referralCount;
 
-    PumpFunBondingCurve public pumpfun;
+    EmotiCoinCurve public pumpfun;
     IImplementationApprovalRegistry public implementationApprovalRegistry;
 
     mapping(address => uint256) public followTimestamps;
@@ -108,23 +108,23 @@ contract EchoVault is
 
         //Initialize Bonding Cuver here
         //TODO: Have to set it 250 PC for prod
-        uint256 GRADUATION_PC_TEST = 0.1 ether; // 0.1 PC
-        uint256 INITIAL_PC_RESERVES_TEST = 0.01 ether; // 10% of the goal
+        uint256 GRADUATION_PC = 250 ether; // 0.1 PC
+        uint256 INITIAL_PC_RESERVES = 25 ether; // 10% of the goal
 
         //TODO: Set it to 0 also check why its there in the first place
-        uint256 TOKENS_TO_BURN_TEST = 930233 ether; // A more proportional burn amount
+        uint256 TOKENS_TO_BURN = 930233 ether; // A more proportional burn amount
 
-        pumpfun = new PumpFunBondingCurve(
+        pumpfun = new EmotiCoinCurve(
             _owner,
             _owner,
             address(this),
             DEV_ADDRESS,
             MAX_SUPPLY,
-            GRADUATION_PC_TEST, // Using the clear constant for 0.1 PC
-            TOKENS_TO_BURN_TEST, // Using a clear constant
+            GRADUATION_PC, // Using the clear constant for 0.1 PC
+            TOKENS_TO_BURN, // Using a clear constant
             300, // feeBps
             BONDING_CURVE_SHARE, // Correct: Matches the actual curve supply
-            INITIAL_PC_RESERVES_TEST, // Using the clear constant for 0.01 PC
+            INITIAL_PC_RESERVES, // Using the clear constant for 0.01 PC
             _router,
             _lpLocker,
             _lpLockSeconds

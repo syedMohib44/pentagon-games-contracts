@@ -3,7 +3,7 @@ pragma solidity >=0.6.6;
 
 import "../shared/BasicAccessControl.sol";
 
-contract EchoVaultMap is BasicAccessControl {
+contract EmotiCoinMap is BasicAccessControl {
     mapping(address => address) public wallets;
 
     function mapWallet(

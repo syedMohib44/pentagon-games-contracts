@@ -35,11 +35,13 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
     // ----------------------------------
 
     struct Stats {
+        uint16 perf;
         uint16 atk;
-        uint16 luck;
-        uint16 hp;
         uint16 def;
+        uint16 hp;
     }
+
+    // struct
 
     /**
      * @dev Represents a single equipped item for getter functions.
@@ -64,7 +66,6 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
     // ----------------------------------
 
     // --- Template & Stats Data ---
-    mapping(uint256 => Stats) public templates; // templateId => Stats
     uint256[] public templateIds; // List of all available template IDs
 
     // --- Item Database ---
@@ -148,7 +149,7 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
                 keccak256(
                     abi.encodePacked(
                         block.timestamp,
-                        block.difficulty,
+                        block.prevrandao,
                         msg.sender,
                         _nextTokenId, // Use nextTokenId for more variance
                         salt
@@ -343,15 +344,16 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
      * @param to The recipient of the new NFT.
      * @param characterId The template ID (e.g., 1 for Kei) to mint.
      */
-    function mint(address to, uint256 characterId) external onlyModerators returns (uint256) {
-        require(templates[characterId].hp > 0, "Template stats not set");
-
+    function mint(
+        address to,
+        uint256 characterId
+    ) external onlyModerators returns (uint256) {
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
 
+        uint16[] memory tempItemsRarity = new uint16[](4);
         // 1. Link token to its template and assign base stats
         tokenIdToTemplateId[tokenId] = characterId;
-        characterStats[tokenId] = templates[characterId];
 
         uint256[4] memory generatedItemIds; // To store for the event
 
@@ -361,7 +363,6 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
 
             // 2a. Determine random rarity (0-5)
             Rarity rarity = Rarity(uint8(_getRandomNumber(tokenId + i) % 6));
-
             // 2b. Get the list of possible items
             uint256[] storage items = characterItems[characterId][slot][rarity];
 
@@ -374,8 +375,40 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
                 // 2d. *** STORE THE ITEM ***
                 equippedItems[tokenId][slot] = selectedItem;
                 generatedItemIds[i] = selectedItem;
+                tempItemsRarity[i] = uint16(uint8(rarity) + 1);
             }
         }
+
+        uint16 perf = (((tempItemsRarity[0] +
+            tempItemsRarity[1] +
+            tempItemsRarity[2] +
+            tempItemsRarity[3]) - 4) / (24 - 4)) * 100;
+
+        uint16 atk = tempItemsRarity[0] *
+            50 +
+            tempItemsRarity[1] *
+            10 +
+            tempItemsRarity[3] *
+            5 +
+            100;
+
+        uint16 def = tempItemsRarity[1] *
+            100 +
+            tempItemsRarity[2] *
+            350 +
+            tempItemsRarity[3] *
+            100;
+
+        uint16 hp = tempItemsRarity[1] *
+            200 +
+            tempItemsRarity[2] *
+            200 +
+            tempItemsRarity[3] *
+            150 +
+            500;
+
+        Stats memory stats = Stats({perf: perf, atk: atk, def: def, hp: hp});
+        characterStats[tokenId] = stats;
 
         // 3. Emit event with generated data
         emit CharacterMinted(
@@ -389,58 +422,49 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
         return tokenId;
     }
 
-    // ----------------------------------
-    // TEMPLATE & STATS FUNCTIONS
-    // ----------------------------------
+    function mintPredefined(
+        address to,
+        uint256 characterId,
+        uint256[] memory items,
+        uint16[] memory stats
+    ) external onlyModerators returns (uint256) {
+        uint256 tokenId = _nextTokenId++;
+        _safeMint(to, tokenId);
 
-    /**
-     * @notice OWNER ONLY: Adds a new character template with base stats.
-     * @dev You must call this for IDs 1, 101, 201 after deployment.
-     */
-    function addTemplate(
-        uint256 _id,
-        Stats calldata _stats
-    ) external onlyOwner {
-        require(templates[_id].hp == 0, "Template ID already exists");
+        // 1. Link token to its template and assign base stats
+        tokenIdToTemplateId[tokenId] = characterId;
 
-        templates[_id] = Stats({
-            atk: _stats.atk,
-            luck: _stats.luck,
-            hp: _stats.hp,
-            def: _stats.def
+        uint256[4] memory generatedItemIds; // To store for the event
+
+        // 2. Random item assignment AND STORAGE
+        for (uint8 i = 0; i < 4; i++) {
+            Slot slot = Slot(i);
+
+            if (items.length > 0) {
+                uint256 selectedItem = items[i];
+
+                equippedItems[tokenId][slot] = selectedItem;
+                generatedItemIds[i] = selectedItem;
+            }
+        }
+
+        characterStats[tokenId] = Stats({
+            perf: stats[0],
+            atk: stats[1],
+            def: stats[2],
+            hp: stats[3]
         });
-        templateIds.push(_id);
 
-        emit TemplateAdded(_id, templates[_id]);
-    }
-
-    /**
-     * @notice Applies a one-time stat boost from PVE game progression.
-     */
-    function applyPveBoost(uint256 tokenId) external {
-        require(_exists(tokenId), "Token does not exist");
-        require(!isPveBoosted[tokenId], "PVE boost already applied");
-
-        Stats storage stats = characterStats[tokenId];
-        uint256 randomSeed = uint256(
-            keccak256(abi.encodePacked(block.difficulty, tokenId))
-        );
-
-        // --- This is the fully corrected syntax ---
-        stats.atk += uint16((stats.atk * ((randomSeed % 6) + 10)) / 100);
-        stats.luck += uint16((stats.luck * ((randomSeed >> 4) % 6) + 10) / 100);
-        stats.hp += uint16((stats.hp * ((randomSeed >> 8) % 6) + 10) / 100);
-        stats.def += uint16((stats.def * ((randomSeed >> 16) % 6) + 10) / 100);
-
-        isPveBoosted[tokenId] = true;
-
-        emit PveBoostApplied(
+        // 3. Emit event with generated data
+        emit CharacterMinted(
             tokenId,
-            stats.atk,
-            stats.luck,
-            stats.hp,
-            stats.def
+            characterId,
+            generatedItemIds[0], // WEAPON
+            generatedItemIds[1], // HEAD
+            generatedItemIds[2], // BODY
+            generatedItemIds[3] // BOOTS
         );
+        return tokenId;
     }
 
     // ----------------------------------

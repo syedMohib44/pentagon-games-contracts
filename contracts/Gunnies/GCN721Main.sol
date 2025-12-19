@@ -5,28 +5,18 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-/**
- * @title GCN721Main
- * @dev The main ERC-721 collection for Chromium and Gold NFTs.
- * - Stores TokenData (designId, tier) for each NFT.
- * - Minting and burning are restricted to the owner (the Crafting Router).
- */
 contract GCN721Main is ERC721, BasicAccessControl {
     using Counters for Counters.Counter;
 
-    // Struct to hold metadata for each token
     struct TokenData {
         uint16 designId;
         uint8 tier;
     }
 
-    // Counter for safely assigning new token IDs
     Counters.Counter private _tokenIdCounter;
 
-    // Mapping from token ID to its data
     mapping(uint256 => TokenData) private _tokenData;
 
-    // Base URI for constructing token metadata URLs
     string private _baseTokenURI;
 
     constructor() ERC721("Gunnies Characters", "GCN") {}
@@ -43,8 +33,8 @@ contract GCN721Main is ERC721, BasicAccessControl {
         uint16 designId,
         uint8 tier
     ) external onlyModerators returns (uint256) {
-        uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter.current();
         _safeMint(to, tokenId);
         _tokenData[tokenId] = TokenData(designId, tier);
         return tokenId;

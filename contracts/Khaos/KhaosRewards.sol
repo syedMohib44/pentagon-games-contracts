@@ -10,10 +10,10 @@ contract KhaosReward is BasicAccessControl {
 
     event RewardEarned(address to, uint256 createdAt);
     event AirdropTransfer(
-        address token,
         address[] indexed addresses,
         uint256[] indexed values
     );
+
 
     fallback() external payable {}
 
@@ -42,6 +42,6 @@ contract KhaosReward is BasicAccessControl {
             );
         }
 
-        emit AirdropTransfer(_tokenAddress, addresses, values);
+        emit AirdropTransfer(addresses, values);
     }
 }
