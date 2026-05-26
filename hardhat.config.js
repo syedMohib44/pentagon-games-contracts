@@ -28,7 +28,7 @@ module.exports = {
       allowUnlimitedContractSize: true
     },
     eth: {
-      url: 'https://eth.llamarpc.com',
+      url: 'https://mainnet.infura.io',
       accounts: [PRIVATE_KEY]
     },
     coretestnet: {
@@ -44,8 +44,9 @@ module.exports = {
       accounts: [PRIVATE_KEY]
     },
     bsc: {
-      url: `https://bsc-dataseed.binance.org/`,
-      accounts: [PRIVATE_KEY]
+      url: "https://bsc-dataseed.binance.org/",
+      accounts: [PRIVATE_KEY],
+      chainId: 56,
     },
     monadtestnet: {
       url: "https://testnet-rpc.monad.xyz",
@@ -193,14 +194,14 @@ module.exports = {
           browserURL: "https://arbiscan.io/"
         }
       },
-      // {
-      //   network: "bnb",
-      //   chainId: 56,
-      //   urls: {
-      //     apiURL: "https://bscscan.com/apis",
-      //     browserURL: "https://bscscan.com/"
-      //   }
-      // },
+      {
+        network: "bsc",
+        chainId: 56,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api?chainid=56",
+          browserURL: "https://bscscan.com/"
+        }
+      },
       {
         network: "penmainnet",
         chainId: 3344,

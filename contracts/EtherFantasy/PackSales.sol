@@ -15,7 +15,7 @@ contract PackSales is BasicAccessControl {
 
     // Prices are in the native token (e.g., PC on Pentagon Chain)
     // Using 18 decimals for precision. $22 -> 22 * 10^18
-    uint256 public constant PACK_PRICE = 0;
+    uint256 public packPrice = 0;
     uint256 public constant REWARD_POOL_SHARE = 20 * 1e18;
     uint256 public constant PROTOCOL_SHARE = 2 * 1e18;
 
@@ -37,7 +37,7 @@ contract PackSales is BasicAccessControl {
      */
     function buyPack(uint256[] memory characterIds) external payable {
         require(characterIds.length > 0, "Quantity must be greater than 0");
-        uint256 totalCost = characterIds.length * PACK_PRICE;
+        uint256 totalCost = characterIds.length * packPrice;
         require(msg.value == totalCost, "Incorrect payment amount");
 
         // 1. Mint NFTs for the buyer
@@ -54,6 +54,14 @@ contract PackSales is BasicAccessControl {
         emit PackPurchased(msg.sender, characterIds.length, totalCost);
     }
 
+
+    /**
+     * @notice Allows owner to update pack price
+     */
+    function setPackPrice(uint256 _packPrice) external onlyOwner {
+        packPrice = _packPrice;
+    }
+
     /**
      * @notice Allows the owner to withdraw accumulated protocol fees.
      */
@@ -64,7 +72,6 @@ contract PackSales is BasicAccessControl {
         require(success, "Withdrawal failed");
     }
 
-    // --- Admin Functions ---
     function setContracts(
         address _characterNFTAddress,
         address _autoDungeonAddress

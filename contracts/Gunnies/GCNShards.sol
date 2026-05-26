@@ -5,6 +5,12 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {BasicAccessControl} from "../shared/BasicAccessControl.sol";
 
 contract GCNShards is ERC1155, BasicAccessControl {
+    uint256 public window = 24 hours;
+    uint256 public gcnDailyLimit = 3;
+
+    mapping(address => uint256) public gcnWindowStart;
+    mapping(address => uint256) public gcnMintedInWindow;
+
     constructor()
         ERC1155("https://api.metadata.pentagon.games/gunnies/{id}.json")
     {}
@@ -115,5 +121,38 @@ contract GCNShards is ERC1155, BasicAccessControl {
             "GCNShards: This token is non-transferable"
         );
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    }
+
+    /**
+     * @dev Public to update window and GCN drop limit. Restricted to the owner.
+     * @param _window Time in seconds. How much later the limit will reset.
+     * @param _gcnDailyLimit How many GCN drops can happen within window.
+     */
+    function updateConfig(
+        uint256 _window,
+        uint256 _gcnDailyLimit
+    ) external onlyOwner {
+        window = _window;
+        gcnDailyLimit = _gcnDailyLimit;
+    }
+
+    function _enforceGcnDailyLimit(address _to, uint256 _amount) internal {
+        uint256 start = gcnWindowStart[_to];
+
+        if (start == 0) {
+            gcnWindowStart[_to] = block.timestamp;
+        }
+        // Reset window if expired
+        else if (block.timestamp > start + window) {
+            gcnWindowStart[_to] = block.timestamp;
+            gcnMintedInWindow[_to] = 0;
+        }
+
+        require(
+            (gcnMintedInWindow[_to] + _amount) <= gcnDailyLimit,
+            "GCN: Per-user daily mint limit exceeded"
+        );
+
+        gcnMintedInWindow[_to] += _amount;
     }
 }

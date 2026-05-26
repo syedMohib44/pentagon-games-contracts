@@ -10,7 +10,7 @@ async function main() {
 
   console.log("CharacterNFT deployed to:", this.CharacterNFT.target);
 
-
+  
   const EthPackBridge = await ethers.getContractFactory("EthPackBridge");
   this.EthPackBridge = await EthPackBridge.connect(addr1).deploy();
   await this.EthPackBridge.waitForDeployment();
@@ -51,7 +51,7 @@ async function main() {
     address: this.EthPackBridge.target,
     contract: "contracts/EtherFantasy/EthPackBridge.sol:EthPackBridge",
   });
-  
+
   await hre.run("verify:verify", {
     address: this.AutoDungeon.target,
     contract: "contracts/EtherFantasy/AutoDungeon.sol:AutoDungeon",

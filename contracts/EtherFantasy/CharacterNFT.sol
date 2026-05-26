@@ -87,6 +87,7 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
     address public packSalesContract;
     address public soulForgeContract;
     uint256 private _nextTokenId;
+    string private _baseTokenURI;
 
     // ----------------------------------
     // EVENTS
@@ -114,19 +115,10 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
 
     constructor() ERC721("Ether Fantasy Character", "EFC") {
         // Initialize base character item sets
-        _initKei();
-        _initIrene();
-        _initLeah();
-
-        // !!! IMPORTANT DEPLOYMENT STEP !!!
-        // You must manually call addTemplate() for your characters (1, 101, 201)
-        // after deployment for minting to work.
-        // Example: addTemplate(1, Stats(10, 5, 100, 8));
+        _init1();
+        _init101();
+        _init201();
     }
-
-    // ----------------------------------
-    // INTERNAL HELPERS
-    // ----------------------------------
 
     function _setCharacterItems(
         uint256 characterId,
@@ -158,11 +150,7 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
             );
     }
 
-    // ----------------------------------
-    // CHARACTER ITEM INITIALIZATION
-    // ----------------------------------
-
-    function _initKei() internal {
+    function _init1() internal {
         uint256 id = 1;
         uint256[] memory tmp;
 
@@ -296,7 +284,7 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
         _setCharacterItems(id, Slot.BOOTS, Rarity.MYTHIC, tmp);
     }
 
-    function _initIrene() internal {
+    function _init101() internal {
         uint256 id = 101;
         uint256[] memory tmp;
 
@@ -315,7 +303,7 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
         // ... (truncated for brevity, logic follows _initKei)
     }
 
-    function _initLeah() internal {
+    function _init201() internal {
         uint256 id = 201;
         uint256[] memory tmp;
 
@@ -333,10 +321,6 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
         _setCharacterItems(id, Slot.WEAPON, Rarity.HIGH, tmp);
         // ... (truncated for brevity, logic follows _initKei)
     }
-
-    // ----------------------------------
-    // MINT FUNCTION (CORE LOGIC)
-    // ----------------------------------
 
     /**
      * @notice Mints a new character, assigning base stats and random items.
@@ -467,7 +451,7 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
         return tokenId;
     }
 
-    // ----------------------------------
+    // ----------------------------------d
     // BURN FUNCTION
     // ----------------------------------
 
@@ -489,9 +473,17 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
         _burn(tokenId);
     }
 
-    // ----------------------------------
-    // VIEW FUNCTIONS
-    // ----------------------------------
+    /**
+     * @notice Updates the base URI for all token metadata.
+     * @param baseURI The new base URI (e.g., "ipfs://QmYourHash/")
+     */
+    function setBaseURI(string memory baseURI) public onlyOwner {
+        _baseTokenURI = baseURI;
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return _baseTokenURI;
+    }
 
     /**
      * @notice Gets all combined data for a specific character token.
@@ -551,14 +543,6 @@ contract CharacterNFT is ERC721, ERC721Burnable, BasicAccessControl {
             });
         }
         return items;
-    }
-
-    // ----------------------------------
-    // ADMIN FUNCTIONS
-    // ----------------------------------
-
-    function setModerator(address _moderator) external onlyOwner {
-        moderatorAddress = _moderator;
     }
 
     function setAuthorizedContracts(

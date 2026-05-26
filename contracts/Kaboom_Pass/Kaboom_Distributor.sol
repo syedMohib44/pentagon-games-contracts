@@ -24,7 +24,7 @@ contract Kaboom_Distributor is BasicAccessControl {
 
     uint256 decimal = 18;
 
-    uint256 public nativePriceNFT = 120 * 10 ** decimal;
+    uint256 public nativePriceNFT = 4.6 ether;
     uint256 public erc20PriceNFT = 0;
 
     bool public _mintingPausedNative = false;

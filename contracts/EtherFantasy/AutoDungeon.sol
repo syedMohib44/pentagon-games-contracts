@@ -73,6 +73,7 @@ contract AutoDungeon is BasicAccessControl {
         ethPackBridge = IEthPackBridge(_ethPackBridgeAddress);
     }
 
+    //TODO: Make characters add as group aswell.
     /**
      * @notice Entrypoint for players to submit up to 3 NFTs to the current dungeon session.
      * @param tokenIds An array of token IDs the player wishes to enter.
@@ -130,6 +131,7 @@ contract AutoDungeon is BasicAccessControl {
                     if ((seed >> 8) % 100 < 5) result.wasBurned = true;
                 }
             } else if (outcomeRoll < 25) {
+                //TODO: Make boss as PVP 
                 // 5% Boss
                 result.outcome = OutcomeType.Boss;
                 if (!_isBattleWon(tokenId, 150)) {
